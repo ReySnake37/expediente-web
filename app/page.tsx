@@ -404,6 +404,9 @@ export default function Home() {
   const [forgotSent,  setForgotSent]  = useState(false);
   const [authError,   setAuthError]   = useState("");
 
+  // ── Intro ──
+  const [introSeen, setIntroSeen] = useState(false);
+
   // ── Folder ──
   const [isOpen,       setIsOpen]       = useState(false);
   const [unlockedUpTo, setUnlockedUpTo] = useState(1);
@@ -706,8 +709,58 @@ export default function Home() {
 
         <AnimatePresence mode="wait">
 
+          {/* ── Vista: Intro / Briefing ── */}
+          {isLoggedIn && !introSeen && (
+            <motion.div
+              key="intro-view"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="w-full max-w-xl flex flex-col gap-6"
+            >
+              {/* Briefing document */}
+              <div className="bg-[#f4f1ea] border border-neutral-300 shadow-2xl p-8 relative">
+                {/* Stamp */}
+                <div className="absolute top-4 right-4 border-2 border-red-800 text-red-800 font-bold px-2 py-1 text-xs rotate-6 opacity-80 tracking-widest">
+                  CONFIDENCIAL
+                </div>
+
+                {/* Header */}
+                <div className="border-b-2 border-neutral-800 pb-4 mb-6">
+                  <p className="text-neutral-500 text-[10px] tracking-[0.3em] mb-1">EXPEDIENTE POLISPOL — BRIEFING INICIAL</p>
+                  <h2 className="text-2xl font-bold text-neutral-800 tracking-widest">BIENVENIDO, AGENTE <span className="text-red-800">{username.toUpperCase()}</span></h2>
+                </div>
+
+                {/* Body — placeholder text, replace with real context */}
+                <div className="space-y-4 text-sm text-neutral-700 leading-relaxed">
+                  <p>
+                    [Aquí va el contexto principal del evento. Explica de qué trata el expediente, qué sucedió, y por qué el agente debe investigar.]
+                  </p>
+                  <p>
+                    [Segundo párrafo: contexto adicional, pistas sobre la narrativa, o instrucciones generales para la investigación.]
+                  </p>
+                  <p>
+                    [Tercer párrafo opcional: tono dramático, advertencia, o llamada a la acción antes de abrir el expediente.]
+                  </p>
+                </div>
+
+                {/* Footer */}
+                <div className="mt-8 pt-4 border-t border-neutral-300 flex items-center justify-between">
+                  <p className="text-neutral-400 text-[10px] tracking-widest">NIVEL DE ACCESO: AUTORIZADO</p>
+                  <button
+                    onClick={() => setIntroSeen(true)}
+                    className="bg-neutral-800 text-[#f4f1ea] px-6 py-2 text-xs tracking-[0.25em] hover:bg-neutral-700 transition-colors border border-neutral-700"
+                  >
+                    ABRIR EXPEDIENTE →
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {/* ── Vista: Carpeta ── */}
-          {activeCase === null && (
+          {(!isLoggedIn || introSeen) && activeCase === null && (
             <motion.div key="folder-view" initial={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.3 }} className="flex flex-col items-center">
               <div className="relative w-[340px] h-[420px] cursor-pointer perspective-[1200px]" onClick={() => setIsOpen(!isOpen)}>
 
