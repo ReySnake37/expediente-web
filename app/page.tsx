@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, FileText, Shield, ArrowLeft, ImageIcon, CheckCircle2 } from "lucide-react";
 
@@ -20,6 +20,27 @@ type WordleState = {
 
 type LetterStatus = "pending" | "correct" | "incorrect";
 
+type Day3RoundData = {
+  images: [string, string, string, string];
+  word:   string;
+};
+
+type Day3ChatMsg = {
+  id:      number;
+  user:    string;
+  text:    string;
+  correct: boolean;
+};
+
+type Day3State = {
+  currentRound:  number;
+  streamerScore: number;
+  chatScore:     number;
+  roundActive:   boolean;
+  roundWinner:   "streamer" | "chat" | null;
+  gameFinished:  boolean;
+};
+
 type PasapalabraState = {
   letterStates: LetterStatus[];
   currentIdx:   number;
@@ -34,9 +55,9 @@ type PasapalabraState = {
 const MAX_WORDLE_GUESSES = 5;
 
 const cases = [
-  { id: 1, title: "01: El Comienzo",  code: "VOID"                    },
-  { id: 2, title: "02: Sombras",      code: "SRCD"                    },
-  { id: 3, title: "03: Metadatos",    code: "SER BUENOS Y SI SON MALOS VIENEN AL CHAT O AL DS Y ME LO CUENTAN" },
+  { id: 1, title: "01: El Comienzo",  code: "SRCD"                    },
+  { id: 2, title: "02: Sombras",      code: "SER BUENOS Y SI SON MALOS VIENEN AL CHAT O AL DISCORD Y ME LO CUENTAN" },
+  { id: 3, title: "03: Metadatos",    code: "VOID"                    },
   { id: 4, title: "04: La Trampa",    code: "ECHO"                    },
   { id: 5, title: "05: El Testigo",   code: "KILO"                    },
   { id: 6, title: "06: La Verdad",    code: "LIMA"                    },
@@ -50,9 +71,9 @@ const case2Words = [
   { label: "EVIDENCIA 4", word: "DIRECTO",  fragment: "D", rotate: "-rotate-1" },
 ];
 
-const CASE3_SENTENCE = "SER BUENOS Y SI SON MALOS VIENEN AL CHAT O AL DS Y ME LO CUENTAN";
+const PASAPALABRA_SENTENCE = "SER BUENOS Y SI SON MALOS VIENEN AL CHAT O AL DISCORD Y ME LO CUENTAN";
 
-const case3Clues = [
+const pasapalabraClues = [
   { letter: "A", clue: "Lugar donde se guardan documentos clasificados",            answer: "A"     },
   { letter: "B", clue: "Registro cronológico de los eventos de una investigación",  answer: "B"    },
   { letter: "C", clue: "Persona responsable de cometer el delito",                  answer: "C"    },
@@ -97,6 +118,21 @@ const evidencePapers = [
     image: "evidencia4.jpg" },
 ];
 
+const TWITCH_CHANNEL = "polispol1";
+
+const day3Rounds: Day3RoundData[] = [
+  { images: ["day3/r01_1.jpg","day3/r01_2.jpg","day3/r01_3.jpg","day3/r01_4.jpg"], word: "personaje"  },
+  { images: ["day3/r02_1.jpg","day3/r02_2.jpg","day3/r02_3.jpg","day3/r02_4.jpg"], word: "texto"  },
+  { images: ["day3/r03_1.jpg","day3/r03_2.jpg","day3/r03_3.jpg","day3/r03_4.jpg"], word: "polispWot"  },
+  { images: ["day3/r04_1.jpg","day3/r04_2.jpg","day3/r04_3.jpg","day3/r04_4.jpg"], word: "parlar"  },
+  { images: ["day3/r05_1.jpg","day3/r05_2.jpg","day3/r05_3.jpg","day3/r05_4.jpg"], word: "color"  },
+  { images: ["day3/r06_1.jpg","day3/r06_2.jpg","day3/r06_3.jpg","day3/r06_4.jpg"], word: "rumba"  },
+  { images: ["day3/r07_1.jpg","day3/r07_2.jpg","day3/r07_3.jpg","day3/r07_4.jpg"], word: "rio"  },
+  { images: ["day3/r08_1.jpg","day3/r08_2.jpg","day3/r08_3.jpg","day3/r08_4.jpg"], word: "texto"  },
+  { images: ["day3/r09_1.jpg","day3/r09_2.jpg","day3/r09_3.jpg","day3/r09_4.jpg"], word: "caso"  },
+  { images: ["day3/r10_1.jpg","day3/r10_2.jpg","day3/r10_3.jpg","day3/r10_4.jpg"], word: "cosa" },
+];
+
 const slideVariants = {
   enter:  { opacity: 0, y: 12 },
   center: { opacity: 1, y: 0  },
@@ -125,12 +161,12 @@ function seededShuffle(arr: number[], seed: string): number[] {
 }
 
 // Pre-computed order in which non-space character positions get blanked.
-const CASE3_BLANK_ORDER = seededShuffle(
+const PASAPALABRA_BLANK_ORDER = seededShuffle(
   Array.from(
-    { length: CASE3_SENTENCE.split("").filter(c => c !== " ").length },
+    { length: PASAPALABRA_SENTENCE.split("").filter(c => c !== " ").length },
     (_, i) => i
   ),
-  CASE3_SENTENCE
+  PASAPALABRA_SENTENCE
 );
 
 function getNextPendingIdx(states: LetterStatus[], from: number): number {
@@ -175,7 +211,7 @@ function PasapalabraGame({
   onPass:   () => void;
   onFinish: () => void;
 }) {
-  const currentClue    = !state.finished && state.currentIdx >= 0 ? case3Clues[state.currentIdx] : null;
+  const currentClue    = !state.finished && state.currentIdx >= 0 ? pasapalabraClues[state.currentIdx] : null;
   const correctCount   = state.letterStates.filter(s => s === "correct").length;
   const incorrectCount = state.letterStates.filter(s => s === "incorrect").length;
   const pendingCount   = state.letterStates.filter(s => s === "pending").length;
@@ -195,8 +231,8 @@ function PasapalabraGame({
       {/* Circle */}
       <div className="flex justify-center">
         <div className="relative" style={{ width: CIRCLE_SIZE, height: CIRCLE_SIZE }}>
-          {case3Clues.map((clue, i) => {
-            const angle     = -Math.PI / 2 + (i / case3Clues.length) * 2 * Math.PI;
+          {pasapalabraClues.map((clue, i) => {
+            const angle     = -Math.PI / 2 + (i / pasapalabraClues.length) * 2 * Math.PI;
             const x         = CIRCLE_CENTER + CIRCLE_RADIUS * Math.cos(angle) - LETTER_BOX / 2;
             const y         = CIRCLE_CENTER + CIRCLE_RADIUS * Math.sin(angle) - LETTER_BOX / 2;
             const status    = state.letterStates[i];
@@ -283,6 +319,244 @@ function PasapalabraGame({
         >
           Terminar ronda
         </button>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Day3Game — 1 vs Chat image-guessing game with Twitch integration
+// ─────────────────────────────────────────────────────────────────
+
+function Day3Game({
+  state, onStartRound, onStreamerGuess, onChatWin, onNextRound,
+}: {
+  state:          Day3State;
+  onStartRound:   () => void;
+  onStreamerGuess: (text: string) => void;
+  onChatWin:      (user: string) => void;
+  onNextRound:    () => void;
+}) {
+  const [input,     setInput]     = useState("");
+  const [chatMsgs,  setChatMsgs]  = useState<Day3ChatMsg[]>([]);
+  const [connected, setConnected] = useState(false);
+  const chatEndRef   = useRef<HTMLDivElement>(null);
+  const wordRef      = useRef("");
+  const activeRef    = useRef(false);
+  const onChatWinRef = useRef(onChatWin);
+
+  // Keep refs current without restarting the WebSocket
+  const round = day3Rounds[state.currentRound];
+  wordRef.current      = state.roundActive ? (round?.word ?? "") : "";
+  activeRef.current    = state.roundActive && !state.roundWinner;
+  onChatWinRef.current = onChatWin;
+
+  // Twitch IRC (anonymous read-only)
+  useEffect(() => {
+    const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
+
+    ws.onopen = () => {
+      ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands");
+      ws.send("PASS oauth:poop");
+      ws.send("NICK justinfan77777");
+      ws.send(`JOIN #${TWITCH_CHANNEL}`);
+      setConnected(true);
+    };
+
+    ws.onclose = () => setConnected(false);
+
+    ws.onmessage = (evt) => {
+      const raw = evt.data as string;
+      if (raw.startsWith("PING")) { ws.send("PONG :tmi.twitch.tv"); return; }
+      if (!raw.includes("PRIVMSG")) return;
+
+      const text = raw.match(/PRIVMSG #\w+ :(.+)/)?.[1]?.trim();
+      if (!text) return;
+
+      const user =
+        raw.match(/display-name=([^;]+)/)?.[1] ||
+        raw.match(/:(\w+)!\w+@/)?.[1] ||
+        "chat";
+
+      const correct =
+        activeRef.current &&
+        normalizeAnswer(text) === normalizeAnswer(wordRef.current);
+
+      if (correct) onChatWinRef.current(user);
+
+      setChatMsgs(prev => [
+        ...prev.slice(-49),
+        { id: Date.now() + Math.random(), user, text, correct },
+      ]);
+    };
+
+    return () => ws.close();
+  }, []);
+
+  // Auto-scroll chat to bottom
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMsgs]);
+
+  function handleStreamerGuess(e: React.SyntheticEvent) {
+    e.preventDefault();
+    if (!input.trim() || !state.roundActive || !!state.roundWinner) return;
+    onStreamerGuess(input.trim());
+    setInput("");
+  }
+
+  const isLast    = state.currentRound >= day3Rounds.length - 1;
+  const hasWinner = !!state.roundWinner;
+
+  return (
+    <div className="w-full max-w-2xl flex flex-col gap-4">
+
+      {/* ── Header: round + scores ── */}
+      <div className="flex items-center justify-between">
+        <span className="text-neutral-400 text-xs tracking-widest">
+          RONDA {state.currentRound + 1} / {day3Rounds.length}
+        </span>
+        <div className="flex items-center gap-4 text-sm font-bold tracking-widest">
+          <span className={state.streamerScore > state.chatScore ? "text-green-400" : "text-neutral-300"}>
+            POLISPOL {state.streamerScore}
+          </span>
+          <span className="text-neutral-600">vs</span>
+          <span className={state.chatScore > state.streamerScore ? "text-green-400" : "text-neutral-300"}>
+            {state.chatScore} CHAT
+          </span>
+        </div>
+        <div className={`flex items-center gap-1.5 text-[10px] tracking-widest ${connected ? "text-green-500" : "text-neutral-600"}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${connected ? "bg-green-500" : "bg-neutral-600"}`} />
+          {connected ? "CHAT CONECTADO" : "CONECTANDO..."}
+        </div>
+      </div>
+
+      {/* ── 2×2 image grid + chat feed ── */}
+      <div className="flex gap-4">
+
+        {/* Images */}
+        <div className="grid grid-cols-2 gap-2 flex-1">
+          {(round?.images ?? ["","","",""]).map((img, i) => (
+            <div
+              key={i}
+              className="aspect-square bg-neutral-800 border border-neutral-700 flex items-center justify-center overflow-hidden"
+            >
+              {state.roundActive || hasWinner ? (
+                img ? (
+                  <img src={img} alt={`Pista ${i + 1}`} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="flex flex-col items-center gap-1 text-neutral-600">
+                    <ImageIcon className="w-6 h-6" />
+                    <span className="text-[10px] tracking-widest">IMAGEN {i + 1}</span>
+                  </div>
+                )
+              ) : (
+                <span className="text-3xl font-bold text-neutral-700">{i + 1}</span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Chat feed */}
+        <div className="w-48 flex flex-col gap-1">
+          <p className="text-[10px] text-neutral-600 tracking-widest mb-1">CHAT — #{TWITCH_CHANNEL}</p>
+          <div className="overflow-y-auto max-h-[40vh] flex flex-col gap-0.5 pr-1">
+            {chatMsgs.length === 0 ? (
+              <p className="text-neutral-700 text-[10px] italic">Sin mensajes aún...</p>
+            ) : (
+              chatMsgs.map(msg => (
+                <div
+                  key={msg.id}
+                  className={`text-[11px] leading-tight break-words ${
+                    msg.correct ? "text-green-400 font-bold" : "text-neutral-400"
+                  }`}
+                >
+                  <span className="text-purple-400 font-bold">{msg.user}</span>
+                  {": "}{msg.text}
+                </div>
+              ))
+            )}
+            <div ref={chatEndRef} />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Round status ── */}
+      {!state.roundActive && !hasWinner && !state.gameFinished && (
+        <button
+          onClick={onStartRound}
+          className="w-full bg-neutral-800 text-neutral-100 py-3 text-sm tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-700"
+        >
+          INICIAR RONDA {state.currentRound + 1}
+        </button>
+      )}
+
+      {state.roundActive && !hasWinner && (
+        <form onSubmit={handleStreamerGuess} className="flex gap-3">
+          <input
+            type="text"
+            value={input}
+            onChange={e => setInput(e.target.value.toUpperCase())}
+            className="flex-1 bg-neutral-900 border border-neutral-600 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-neutral-400 tracking-[0.2em] uppercase placeholder:text-neutral-700 placeholder:tracking-normal"
+            placeholder="Tu respuesta..."
+            autoComplete="off"
+            autoFocus
+          />
+          <button
+            type="submit"
+            disabled={!input.trim()}
+            className="bg-neutral-700 text-neutral-200 px-5 py-2 text-xs tracking-[0.2em] hover:bg-neutral-600 transition-colors border border-neutral-600 disabled:opacity-30 shrink-0"
+          >
+            ADIVINAR
+          </button>
+        </form>
+      )}
+
+      {hasWinner && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          className={`border p-4 flex items-center justify-between gap-4 ${
+            state.roundWinner === "streamer"
+              ? "border-yellow-600 bg-yellow-950/40"
+              : "border-purple-600 bg-purple-950/40"
+          }`}
+        >
+          <div>
+            <p className={`text-sm font-bold tracking-widest ${
+              state.roundWinner === "streamer" ? "text-yellow-400" : "text-purple-400"
+            }`}>
+              {state.roundWinner === "streamer" ? "¡POLISPOL GANA LA RONDA!" : "¡EL CHAT GANA LA RONDA!"}
+            </p>
+            <p className="text-neutral-400 text-xs mt-1 tracking-widest">
+              LA PALABRA ERA: <span className="text-neutral-100 font-bold">{round?.word}</span>
+            </p>
+          </div>
+          <button
+            onClick={onNextRound}
+            className="bg-neutral-700 text-neutral-200 px-4 py-2 text-xs tracking-[0.2em] hover:bg-neutral-600 transition-colors border border-neutral-600 shrink-0"
+          >
+            {isLast ? "VER RESULTADO →" : `RONDA ${state.currentRound + 2} →`}
+          </button>
+        </motion.div>
+      )}
+
+      {state.gameFinished && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          className="border border-neutral-600 bg-neutral-800/60 p-6 text-center"
+        >
+          <p className="text-neutral-400 text-[10px] tracking-[0.3em] mb-2">PARTIDA COMPLETADA</p>
+          <p className="text-3xl font-bold tracking-widest mb-1">
+            {state.streamerScore > state.chatScore
+              ? <span className="text-yellow-400">POLISPOL GANA</span>
+              : state.chatScore > state.streamerScore
+                ? <span className="text-purple-400">CHAT GANA</span>
+                : <span className="text-neutral-200">EMPATE</span>}
+          </p>
+          <p className="text-neutral-500 text-sm tracking-widest">
+            {state.streamerScore} — {state.chatScore}
+          </p>
+        </motion.div>
       )}
     </div>
   );
@@ -421,9 +695,19 @@ export default function Home() {
     case2Words.map(() => ({ guesses: [], currentInput: "", won: false, lost: false }))
   );
 
+  // ── Day3 game state for case 3 ──
+  const [day3State, setDay3State] = useState<Day3State>({
+    currentRound:  0,
+    streamerScore: 0,
+    chatScore:     0,
+    roundActive:   false,
+    roundWinner:   null,
+    gameFinished:  false,
+  });
+
   // ── Pasapalabra state for case 3 ──
   const [pasapalabraState, setPasapalabraState] = useState<PasapalabraState>(() => ({
-    letterStates: case3Clues.map(() => "pending" as LetterStatus),
+    letterStates: pasapalabraClues.map(() => "pending" as LetterStatus),
     currentIdx:   0,
     currentInput: "",
     finished:     false,
@@ -437,11 +721,11 @@ export default function Home() {
     ...cases.filter(c => c.id > unlockedUpTo),
   ];
 
-  const wordle2Fragments   = case2Words.map((w, i) => (wordleStates[i].won ? w.fragment : null));
-  const wordle2SolvedCount = wordle2Fragments.filter(Boolean).length;
-  const wordle2AllSolved   = wordle2SolvedCount === case2Words.length;
+  const wordleFragments   = case2Words.map((w, i) => (wordleStates[i].won ? w.fragment : null));
+  const wordleSolvedCount = wordleFragments.filter(Boolean).length;
+  const wordleAllSolved   = wordleSolvedCount === case2Words.length;
 
-  const case3IncorrectCount = pasapalabraState.letterStates.filter(s => s === "incorrect").length;
+  const pasapalabraIncorrectCount = pasapalabraState.letterStates.filter(s => s === "incorrect").length;
 
   // ── Auth handlers ──
   function switchView(view: LoginView) { setAuthError(""); setForgotSent(false); setLoginView(view); }
@@ -512,7 +796,7 @@ export default function Home() {
   function handlePasapalabraAnswer() {
     const ps = pasapalabraState;
     if (ps.finished || !ps.currentInput.trim()) return;
-    const clue    = case3Clues[ps.currentIdx];
+    const clue    = pasapalabraClues[ps.currentIdx];
     const correct = normalizeAnswer(ps.currentInput) === normalizeAnswer(clue.answer);
     const newStates = [...ps.letterStates] as LetterStatus[];
     newStates[ps.currentIdx] = correct ? "correct" : "incorrect";
@@ -544,11 +828,47 @@ export default function Home() {
     }));
   }
 
+  // ── Day3 handlers ──
+  function handleDay3StartRound() {
+    setDay3State(prev => ({ ...prev, roundActive: true, roundWinner: null }));
+  }
+
+  function handleDay3StreamerGuess(text: string) {
+    const round = day3Rounds[day3State.currentRound];
+    if (!round || !day3State.roundActive || day3State.roundWinner) return;
+    if (normalizeAnswer(text) === normalizeAnswer(round.word)) {
+      setDay3State(prev => ({
+        ...prev,
+        roundActive:   false,
+        roundWinner:   "streamer",
+        streamerScore: prev.streamerScore + 1,
+      }));
+    }
+  }
+
+  function handleDay3ChatWin(user: string) {
+    setDay3State(prev => {
+      if (!prev.roundActive || prev.roundWinner) return prev;
+      return { ...prev, roundActive: false, roundWinner: "chat", chatScore: prev.chatScore + 1 };
+    });
+    void user;
+  }
+
+  function handleDay3NextRound() {
+    setDay3State(prev => {
+      const next = prev.currentRound + 1;
+      if (next >= day3Rounds.length) {
+        return { ...prev, roundActive: false, roundWinner: null, gameFinished: true };
+      }
+      return { ...prev, currentRound: next, roundActive: false, roundWinner: null };
+    });
+  }
+
   // ── Sentence display for case 3 code section ──
-  const case3SentenceDisplay = (() => {
-    const blankedSet = new Set(CASE3_BLANK_ORDER.slice(0, case3IncorrectCount));
+  const pasapalabrasDisplay = (() => {
+    const blankedSet = new Set(PASAPALABRA_BLANK_ORDER.slice(0, pasapalabraIncorrectCount));
     let nonSpaceIdx = 0;
-    return CASE3_SENTENCE.split("").map((ch, i) => {
+    return PASAPALABRA_SENTENCE.split("").map((ch, i) => {
       if (ch === " ") return { ch: " ", key: `sp-${i}`, blank: false };
       const blank = blankedSet.has(nonSpaceIdx);
       nonSpaceIdx++;
@@ -810,9 +1130,9 @@ export default function Home() {
                         {accessible && (
                           <div className="mt-auto">
                             <p className="text-sm text-neutral-600 mb-4 line-clamp-3">
-                              {c.id === 2
+                              {c.id === 1
                                 ? "Cuatro palabras ocultas. Cada una guarda un fragmento del código. Descífralas todas para avanzar."
-                                : c.id === 3
+                                : c.id === 2
                                   ? "Un rosco de 27 letras aguarda. Completa el abecedario y descifra la frase para continuar."
                                   : "Analiza las evidencias disponibles y descifra el código para avanzar en la investigación."}
                             </p>
@@ -868,6 +1188,19 @@ export default function Home() {
 
               {/* Evidence papers */}
               {activeCase === 3 ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, ease: "backOut" }}
+                >
+                  <Day3Game
+                    state={day3State}
+                    onStartRound={handleDay3StartRound}
+                    onStreamerGuess={handleDay3StreamerGuess}
+                    onChatWin={handleDay3ChatWin}
+                    onNextRound={handleDay3NextRound}
+                  />
+                </motion.div>
+              ) : activeCase === 2 ? (
                 <div className="flex flex-col gap-6 w-full max-w-2xl">
                   {/* Single evidence paper */}
                   <motion.div
@@ -904,7 +1237,7 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-6 w-full max-w-2xl">
-                  {activeCase === 2
+                  {activeCase === 1
                     ? case2Words.map((w, i) => (
                         <motion.div key={i} initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
                           transition={{ duration: 0.45, delay: i * 0.08, ease: "backOut" }}>
@@ -948,8 +1281,8 @@ export default function Home() {
                 <p className="text-neutral-500 text-xs tracking-[0.25em] mb-1">RESOLUCIÓN</p>
                 <div className="w-full h-px bg-neutral-700 mb-4" />
 
-                {/* Case 2: fragment progress */}
-                {activeCase === 2 && (
+                {/* Case 1: fragment progress */}
+                {activeCase === 1 && (
                   <div className="mb-5">
                     <p className="text-neutral-400 text-xs tracking-[0.1em] leading-relaxed mb-4">
                       Descifra las cuatro palabras para revelar el código. Cada palabra resuelta entrega un fragmento.
@@ -964,13 +1297,13 @@ export default function Home() {
                       ))}
                     </div>
                     <p className="text-center text-neutral-600 text-xs tracking-widest">
-                      {wordle2SolvedCount} DE 4 PALABRAS DESCIFRADAS
+                      {wordleSolvedCount} DE 4 PALABRAS DESCIFRADAS
                     </p>
                   </div>
                 )}
 
-                {/* Case 3: sentence reveal */}
-                {activeCase === 3 && (
+                {/* Case 2: sentence reveal */}
+                {activeCase === 2 && (
                   <div className="mb-5">
                     <p className="text-neutral-400 text-xs tracking-[0.1em] leading-relaxed mb-4">
                       Completa el rosco para revelar la frase. Cada error oculta una letra del mensaje.
@@ -979,7 +1312,7 @@ export default function Home() {
                       <div className="bg-neutral-900 border border-neutral-700 p-4 mb-4">
                         <p className="text-neutral-500 text-[10px] tracking-widest mb-3 text-center">MENSAJE DESCIFRADO</p>
                         <div className="flex flex-wrap justify-center gap-1">
-                          {case3SentenceDisplay.map(({ ch, key, blank }) =>
+                          {pasapalabrasDisplay.map(({ ch, key, blank }) =>
                             ch === " " ? (
                               <div key={key} className="w-3" />
                             ) : (
@@ -993,9 +1326,9 @@ export default function Home() {
                             )
                           )}
                         </div>
-                        {case3IncorrectCount > 0 && (
+                        {pasapalabraIncorrectCount > 0 && (
                           <p className="text-neutral-600 text-[10px] tracking-widest mt-3 text-center">
-                            {case3IncorrectCount} LETRA{case3IncorrectCount !== 1 ? "S" : ""} OCULTADA{case3IncorrectCount !== 1 ? "S" : ""}
+                            {pasapalabraIncorrectCount} LETRA{pasapalabraIncorrectCount !== 1 ? "S" : ""} OCULTADA{pasapalabraIncorrectCount !== 1 ? "S" : ""}
                           </p>
                         )}
                       </div>
@@ -1003,30 +1336,36 @@ export default function Home() {
                   </div>
                 )}
 
-                {activeCase !== 2 && activeCase !== 3 && (
+                {activeCase === 3 && !day3State.gameFinished && (
+                  <p className="text-neutral-400 text-xs tracking-[0.1em] leading-relaxed mb-5">
+                    Completa las 10 rondas para revelar el código del siguiente caso.
+                  </p>
+                )}
+
+                {activeCase !== 1 && activeCase !== 2 && activeCase !== 3 && (
                   <p className="text-neutral-400 text-xs tracking-[0.1em] leading-relaxed mb-5">
                     Analiza las evidencias e ingresa el código descifrado para desbloquear el siguiente caso.
                   </p>
                 )}
 
                 {/* Code input */}
-                {codeStatus !== "success" ? (
+                {(activeCase !== 3 || day3State.gameFinished) && codeStatus !== "success" ? (
                   <form onSubmit={handleCodeSubmit} className="flex gap-3">
                     <input
                       type="text"
                       value={codeInput}
                       onChange={e => { setCodeInput(e.target.value.toUpperCase()); setCodeStatus("idle"); }}
-                      disabled={activeCase === 2 && !wordle2AllSolved}
-                      className={`flex-1 bg-neutral-900 border border-neutral-600 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-neutral-400 uppercase placeholder:text-neutral-700 placeholder:normal-case placeholder:tracking-normal disabled:opacity-30 ${activeCase === 3 ? "tracking-wide" : "tracking-[0.3em]"}`}
+                      disabled={activeCase === 1 && !wordleAllSolved}
+                      className={`flex-1 bg-neutral-900 border border-neutral-600 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-neutral-400 uppercase placeholder:text-neutral-700 placeholder:normal-case placeholder:tracking-normal disabled:opacity-30 ${activeCase === 2 ? "tracking-wide" : "tracking-[0.3em]"}`}
                       placeholder={
-                        activeCase === 2 && !wordle2AllSolved ? "Descifra las 4 palabras primero"
+                        activeCase === 1 && !wordleAllSolved ? "Descifra las 4 palabras primero"
                         : "Ingresa el código"
                       }
-                      maxLength={activeCase === 3 ? 80 : 20}
+                      maxLength={activeCase === 2 ? 80 : 20}
                     />
                     <button
                       type="submit"
-                      disabled={activeCase === 2 && !wordle2AllSolved}
+                      disabled={activeCase === 1 && !wordleAllSolved}
                       className="bg-neutral-700 text-neutral-200 px-5 py-2 text-xs tracking-[0.2em] hover:bg-neutral-600 transition-colors border border-neutral-600 hover:border-neutral-400 shrink-0 disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       VERIFICAR
