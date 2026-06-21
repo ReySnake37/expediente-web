@@ -48,6 +48,9 @@ type PasapalabraState = {
   finished:     boolean;
 };
 
+type BoomPhase  = "waiting" | "playing" | "finished";
+type BoomPlayer = { name: string; eliminated: boolean };
+
 // ─────────────────────────────────────────────────────────────────
 // Static data
 // ─────────────────────────────────────────────────────────────────
@@ -65,10 +68,10 @@ const cases = [
 ];
 
 const case2Words = [
-  { label: "EVIDENCIA 1", word: "CINEMA",   fragment: "S", rotate: "-rotate-2" },
-  { label: "EVIDENCIA 2", word: "TURRENTS", fragment: "R", rotate: "rotate-1"  },
-  { label: "EVIDENCIA 3", word: "AVATAR",   fragment: "C", rotate: "rotate-2"  },
-  { label: "EVIDENCIA 4", word: "DIRECTO",  fragment: "D", rotate: "-rotate-1" },
+  { label: "EVIDENCIA 1", word: "CINEMA",   fragment: "S", rotate: "-rotate-2", clue: "[Pista para CINEMA]"   },
+  { label: "EVIDENCIA 2", word: "TURRENTS", fragment: "R", rotate: "rotate-1",  clue: "[Pista para TURRENTS]" },
+  { label: "EVIDENCIA 3", word: "AVATAR",   fragment: "C", rotate: "rotate-2",  clue: "[Pista para AVATAR]"   },
+  { label: "EVIDENCIA 4", word: "DIRECTO",  fragment: "D", rotate: "-rotate-1", clue: "[Pista para DIRECTO]"  },
 ];
 
 const PASAPALABRA_SENTENCE = "SER BUENOS Y SI SON MALOS VIENEN AL CHAT O AL DISCORD Y ME LO CUENTAN";
@@ -131,6 +134,24 @@ const day3Rounds: Day3RoundData[] = [
   { images: ["day3/r08_1.jpg","day3/r08_2.jpg","day3/r08_3.jpg","day3/r08_4.jpg"], word: "texto"  },
   { images: ["day3/r09_1.jpg","day3/r09_2.jpg","day3/r09_3.jpg","day3/r09_4.jpg"], word: "caso"  },
   { images: ["day3/r10_1.jpg","day3/r10_2.jpg","day3/r10_3.jpg","day3/r10_4.jpg"], word: "cosa" },
+];
+
+const TURN_SECONDS      = 15;
+const MAX_BOOM_PLAYERS  = 15;
+const BOOM_CIRCLE_SIZE   = 340;
+const BOOM_CIRCLE_CENTER = BOOM_CIRCLE_SIZE / 2;
+const BOOM_CIRCLE_RADIUS = 140;
+
+const BOOM_SYLLABLES = [
+  "PA", "CA", "MA", "LA", "TA", "SA", "RA", "DA", "BA", "GA", "NA", "VA",
+  "PE", "ME", "LE", "TE", "SE", "RE", "DE", "BE", "NE", "VE",
+  "PI", "MI", "LI", "TI", "SI", "RI", "DI", "BI", "NI", "VI",
+  "PO", "CO", "MO", "LO", "TO", "SO", "RO", "DO", "NO", "VO",
+  "PU", "CU", "MU", "LU", "TU", "SU", "RU", "BU", "NU",
+  "AN", "EN", "ON", "UN", "AL", "EL", "AR", "ER", "OR",
+  "PLA", "CLA", "FLA", "BLA", "TRA", "GRA", "FRA", "BRA", "PRE", "TRE",
+  "CON", "COM", "CAN", "TAN", "MAN", "PAN", "SON", "MON", "DON", "RON",
+  "SIN", "LIN", "MIN", "TIN", "MEN", "TEN", "VEN", "LEN",
 ];
 
 const slideVariants = {
@@ -563,13 +584,386 @@ function Day3Game({
 }
 
 // ─────────────────────────────────────────────────────────────────
+// BoomGame — Boom Party–style syllable game with Twitch chat
+// ─────────────────────────────────────────────────────────────────
+
+function BoomGame({ onFinish, username }: { onFinish: () => void; username: string }) {
+  const [phase,      setPhase]      = useState<BoomPhase>("waiting");
+  const [players,    setPlayers]    = useState<BoomPlayer[]>([]);
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [syllable,   setSyllable]   = useState("");
+  const [usedWords,  setUsedWords]  = useState<string[]>([]);
+  const [timeLeft,   setTimeLeft]   = useState(TURN_SECONDS);
+  const [winner,     setWinner]     = useState<string | null>(null);
+  const [chatMsgs,   setChatMsgs]   = useState<{ id: number; user: string; text: string; highlight: boolean }[]>([]);
+  const [connected,     setConnected]     = useState(false);
+  const [streamerInput, setStreamerInput] = useState("");
+
+  const chatEndRef    = useRef<HTMLDivElement>(null);
+  const phaseRef      = useRef<BoomPhase>("waiting");
+  const playersRef    = useRef<BoomPlayer[]>([]);
+  const currentIdxRef = useRef(0);
+  const syllableRef   = useRef("");
+  const usedWordsRef  = useRef<string[]>([]);
+  const onFinishRef   = useRef(onFinish);
+
+  phaseRef.current      = phase;
+  playersRef.current    = players;
+  currentIdxRef.current = currentIdx;
+  syllableRef.current   = syllable;
+  usedWordsRef.current  = usedWords;
+  onFinishRef.current   = onFinish;
+
+  function pickSyllable() {
+    return BOOM_SYLLABLES[Math.floor(Math.random() * BOOM_SYLLABLES.length)];
+  }
+
+  function getNextAliveIdx(from: number, arr: BoomPlayer[]): number {
+    for (let i = 1; i <= arr.length; i++) {
+      const idx = (from + i) % arr.length;
+      if (!arr[idx].eliminated) return idx;
+    }
+    return from;
+  }
+
+  function countAlive(arr: BoomPlayer[]): number {
+    return arr.filter(p => !p.eliminated).length;
+  }
+
+  function isStreamerTurn(): boolean {
+    return players[currentIdx]?.name.toLowerCase() === username.toLowerCase();
+  }
+
+  function handleStreamerWordSubmit(e: React.SyntheticEvent) {
+    e.preventDefault();
+    if (phase !== "playing" || !isStreamerTurn()) return;
+    const normalized = normalizeAnswer(streamerInput);
+    const syl        = normalizeAnswer(syllable);
+    if (!normalized || !normalized.includes(syl) || usedWords.includes(normalized)) {
+      setStreamerInput("");
+      return;
+    }
+    setUsedWords(prev => [...prev, normalized]);
+    const next = getNextAliveIdx(currentIdx, players);
+    setCurrentIdx(next);
+    setSyllable(pickSyllable());
+    setTimeLeft(TURN_SECONDS);
+    setStreamerInput("");
+  }
+
+  // Seed the streamer as the first player on mount
+  useEffect(() => {
+    const name = username.trim() || "POLISPOL";
+    setPlayers([{ name, eliminated: false }]);
+  }, []);
+
+  // Countdown timer — eliminates current player on timeout
+  useEffect(() => {
+    if (phase !== "playing") return;
+    if (timeLeft <= 0) {
+      const capturedIdx = currentIdxRef.current;
+      const cur = playersRef.current[capturedIdx];
+      if (!cur || cur.eliminated) return;
+      const updated = playersRef.current.map((p, i) =>
+        i === capturedIdx ? { ...p, eliminated: true } : p
+      );
+      const alive = countAlive(updated);
+      setPlayers(updated);
+      if (alive <= 1) {
+        const w = updated.find(p => !p.eliminated)?.name ?? "Nadie";
+        setWinner(w);
+        setPhase("finished");
+        onFinishRef.current();
+      } else {
+        const next = getNextAliveIdx(capturedIdx, updated);
+        setCurrentIdx(next);
+        setSyllable(pickSyllable());
+        setTimeLeft(TURN_SECONDS);
+      }
+      return;
+    }
+    const t = setTimeout(() => setTimeLeft(p => p - 1), 1000);
+    return () => clearTimeout(t);
+  }, [phase, timeLeft]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMsgs]);
+
+  // Twitch IRC — registration + answer detection
+  useEffect(() => {
+    const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
+    ws.onopen = () => {
+      ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands");
+      ws.send("PASS oauth:poop");
+      ws.send("NICK justinfan33333");
+      ws.send(`JOIN #${TWITCH_CHANNEL}`);
+      setConnected(true);
+    };
+    ws.onclose = () => setConnected(false);
+    ws.onmessage = (evt) => {
+      const raw  = evt.data as string;
+      if (raw.startsWith("PING")) { ws.send("PONG :tmi.twitch.tv"); return; }
+      if (!raw.includes("PRIVMSG")) return;
+      const text = raw.match(/PRIVMSG #\w+ :(.+)/)?.[1]?.trim() ?? "";
+      const user = (
+        raw.match(/display-name=([^;]+)/)?.[1] ||
+        raw.match(/:(\w+)!\w+@/)?.[1] ||
+        "anon"
+      ).toLowerCase();
+
+      if (phaseRef.current === "waiting") {
+        if (text.toLowerCase() === "!play") {
+          setPlayers(prev => {
+            if (prev.length >= MAX_BOOM_PLAYERS) return prev;
+            if (prev.some(p => p.name.toLowerCase() === user)) return prev;
+            return [...prev, { name: user, eliminated: false }];
+          });
+        }
+        return;
+      }
+
+      if (phaseRef.current === "playing") {
+        const cur     = playersRef.current[currentIdxRef.current];
+        const baseMsg = { id: Date.now() + Math.random(), user, text, highlight: false };
+        if (!cur || cur.name.toLowerCase() !== user) {
+          setChatMsgs(prev => [...prev.slice(-49), baseMsg]);
+          return;
+        }
+        const normalized = normalizeAnswer(text);
+        const syl        = normalizeAnswer(syllableRef.current);
+        if (!normalized.includes(syl) || usedWordsRef.current.includes(normalized)) {
+          setChatMsgs(prev => [...prev.slice(-49), baseMsg]);
+          return;
+        }
+        // Valid answer — advance turn
+        setChatMsgs(prev => [...prev.slice(-49), { ...baseMsg, highlight: true }]);
+        setUsedWords(prev => [...prev, normalized]);
+        const next = getNextAliveIdx(currentIdxRef.current, playersRef.current);
+        setCurrentIdx(next);
+        setSyllable(pickSyllable());
+        setTimeLeft(TURN_SECONDS);
+      }
+    };
+    return () => ws.close();
+  }, []);
+
+  const arrowDeg = players.length > 0 ? (currentIdx / players.length) * 360 : 0;
+
+  return (
+    <div className="w-full max-w-2xl flex flex-col gap-4">
+
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <span className="text-neutral-400 text-xs tracking-widest">
+          {phase === "waiting"
+            ? `REGISTRO: ${players.length} / ${MAX_BOOM_PLAYERS}`
+            : phase === "playing"
+              ? `${countAlive(players)} JUGADORES EN JUEGO`
+              : "PARTIDA FINALIZADA"}
+        </span>
+        <div className={`flex items-center gap-1.5 text-[10px] tracking-widest ${connected ? "text-green-500" : "text-neutral-600"}`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${connected ? "bg-green-500" : "bg-neutral-600"}`} />
+          {connected ? "CHAT CONECTADO" : "CONECTANDO..."}
+        </div>
+      </div>
+
+      {/* Waiting phase */}
+      {phase === "waiting" && (
+        <div className="flex flex-col gap-4">
+          <div className="bg-neutral-800/40 border border-neutral-700 p-4">
+            <p className="text-neutral-400 text-xs tracking-widest mb-3">
+              Los primeros <span className="text-amber-400 font-bold">{MAX_BOOM_PLAYERS}</span> en escribir{" "}
+              <span className="text-amber-400 font-bold">!play</span> en el chat participarán.
+            </p>
+            <div className="flex flex-wrap gap-2 min-h-[32px]">
+              {players.map((p, i) => (
+                <span key={i} className="bg-neutral-700 text-neutral-200 px-2 py-1 text-xs tracking-wider">
+                  {i + 1}. {p.name}
+                </span>
+              ))}
+              {players.length === 0 && (
+                <span className="text-neutral-600 text-xs italic">Esperando jugadores...</span>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              if (players.length < 2) return;
+              setSyllable(pickSyllable());
+              setCurrentIdx(0);
+              setTimeLeft(TURN_SECONDS);
+              setPhase("playing");
+            }}
+            disabled={players.length < 2}
+            className="w-full bg-neutral-800 text-neutral-100 py-3 text-sm tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-700 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            {players.length < 2
+              ? `ESPERANDO JUGADORES (${players.length} / ${MAX_BOOM_PLAYERS})`
+              : `INICIAR CON ${players.length} JUGADORES`}
+          </button>
+        </div>
+      )}
+
+      {/* Playing / finished */}
+      {phase !== "waiting" && (
+        <div className="flex gap-4 items-start">
+
+          {/* Circle with rotating arrow */}
+          <div
+            className="relative shrink-0"
+            style={{ width: BOOM_CIRCLE_SIZE, height: BOOM_CIRCLE_SIZE }}
+          >
+            {players.map((p, i) => {
+              const angle  = -Math.PI / 2 + (i / players.length) * 2 * Math.PI;
+              const x      = BOOM_CIRCLE_CENTER + BOOM_CIRCLE_RADIUS * Math.cos(angle);
+              const y      = BOOM_CIRCLE_CENTER + BOOM_CIRCLE_RADIUS * Math.sin(angle);
+              const isCurr = i === currentIdx && phase === "playing";
+              return (
+                <div
+                  key={i}
+                  style={{ left: x, top: y, transform: "translate(-50%,-50%)", position: "absolute" }}
+                  className={`px-1.5 py-0.5 text-[9px] font-bold tracking-wide border text-center w-[72px] truncate transition-colors
+                    ${p.eliminated
+                      ? "bg-neutral-900 border-neutral-800 text-neutral-700 line-through"
+                      : isCurr
+                        ? "bg-amber-400 border-amber-500 text-neutral-900"
+                        : "bg-neutral-800 border-neutral-600 text-neutral-200"}`}
+                >
+                  {p.name}
+                </div>
+              );
+            })}
+
+            {/* Arrow pointing at current player — SVG so transform-origin is exact */}
+            <svg
+              className="absolute inset-0 pointer-events-none"
+              width={BOOM_CIRCLE_SIZE}
+              height={BOOM_CIRCLE_SIZE}
+            >
+              <g
+                style={{
+                  transform: `rotate(${arrowDeg}deg)`,
+                  transformOrigin: `${BOOM_CIRCLE_CENTER}px ${BOOM_CIRCLE_CENTER}px`,
+                  transition: "transform 0.6s ease",
+                }}
+              >
+                {/* stem: starts 52px above center, ends 20px before player name */}
+                <line
+                  x1={BOOM_CIRCLE_CENTER}
+                  y1={BOOM_CIRCLE_CENTER - 52}
+                  x2={BOOM_CIRCLE_CENTER}
+                  y2={BOOM_CIRCLE_CENTER - BOOM_CIRCLE_RADIUS + 22}
+                  stroke="#fbbf24"
+                  strokeWidth="3"
+                  strokeLinecap="round"
+                />
+                {/* arrowhead */}
+                <polygon
+                  points={`
+                    ${BOOM_CIRCLE_CENTER},${BOOM_CIRCLE_CENTER - BOOM_CIRCLE_RADIUS + 5}
+                    ${BOOM_CIRCLE_CENTER - 8},${BOOM_CIRCLE_CENTER - BOOM_CIRCLE_RADIUS + 23}
+                    ${BOOM_CIRCLE_CENTER + 8},${BOOM_CIRCLE_CENTER - BOOM_CIRCLE_RADIUS + 23}
+                  `}
+                  fill="#fbbf24"
+                />
+              </g>
+            </svg>
+
+            {/* Syllable + timer in center — only during playing */}
+            {phase === "playing" && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-3xl font-bold tracking-widest text-neutral-100 mb-1">{syllable}</span>
+                <span className={`text-xl font-bold tabular-nums ${
+                  timeLeft <= 5 ? "text-red-400" : timeLeft <= 10 ? "text-yellow-400" : "text-green-400"
+                }`}>
+                  {timeLeft}s
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Right panel: current turn / winner + chat */}
+          <div className="flex-1 flex flex-col gap-3 min-w-0">
+            {phase === "playing" && (
+              <div className="bg-neutral-800/60 border border-neutral-700 p-3">
+                <p className="text-[10px] text-neutral-500 tracking-widest mb-1">TURNO DE</p>
+                <p className="text-sm font-bold text-amber-400 tracking-wider truncate">
+                  {players[currentIdx]?.name}
+                </p>
+                <p className="text-xs text-neutral-400 mt-1.5">
+                  Di una palabra con{" "}
+                  <span className="text-neutral-100 font-bold text-sm">"{syllable}"</span>
+                </p>
+              </div>
+            )}
+
+            {phase === "playing" && isStreamerTurn() && (
+              <form onSubmit={handleStreamerWordSubmit} className="flex gap-2">
+                <input
+                  type="text"
+                  value={streamerInput}
+                  onChange={e => setStreamerInput(e.target.value.toUpperCase())}
+                  className="flex-1 min-w-0 bg-neutral-900 border border-amber-600 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-amber-400 tracking-[0.2em] uppercase placeholder:text-neutral-600 placeholder:normal-case placeholder:tracking-normal"
+                  placeholder={`Palabra con "${syllable}"`}
+                  autoComplete="off"
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  disabled={!streamerInput.trim()}
+                  className="bg-amber-700 text-neutral-100 px-4 py-2 text-xs tracking-[0.2em] hover:bg-amber-600 transition-colors border border-amber-600 disabled:opacity-30 shrink-0"
+                >
+                  ENVIAR
+                </button>
+              </form>
+            )}
+
+            {phase === "finished" && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                className="border border-amber-600 bg-amber-950/40 p-4 text-center"
+              >
+                <p className="text-[10px] tracking-widest text-amber-500/70 mb-2">GANADOR / GANADORA</p>
+                <p className="text-xl font-bold text-amber-400 tracking-widest break-words">{winner}</p>
+              </motion.div>
+            )}
+
+            <div className="flex flex-col gap-1">
+              <p className="text-[10px] text-neutral-600 tracking-widest">CHAT — #{TWITCH_CHANNEL}</p>
+              <div className="overflow-y-auto max-h-[30vh] flex flex-col gap-0.5">
+                {chatMsgs.length === 0 && (
+                  <p className="text-neutral-700 text-[10px] italic">Sin mensajes aún...</p>
+                )}
+                {chatMsgs.map(msg => (
+                  <div
+                    key={msg.id}
+                    className={`text-[11px] leading-tight break-words ${
+                      msg.highlight ? "text-green-400 font-bold" : "text-neutral-400"
+                    }`}
+                  >
+                    <span className="text-purple-400 font-bold">{msg.user}</span>: {msg.text}
+                  </div>
+                ))}
+                <div ref={chatEndRef} />
+              </div>
+            </div>
+          </div>
+
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
 // WordlePaper component (state is lifted to Home to persist navigation)
 // ─────────────────────────────────────────────────────────────────
 
 function WordlePaper({
-  label, word, fragment, rotate, state, onInput, onSubmit,
+  label, word, fragment, rotate, clue, state, onInput, onSubmit,
 }: {
-  label: string; word: string; fragment: string; rotate: string;
+  label: string; word: string; fragment: string; rotate: string; clue?: string;
   state: WordleState;
   onInput:  (v: string) => void;
   onSubmit: () => void;
@@ -590,6 +984,13 @@ function WordlePaper({
           </span>
         )}
       </div>
+
+      {clue && (
+        <div className="bg-neutral-100 border border-neutral-300 px-3 py-2">
+          <p className="text-[10px] text-neutral-500 tracking-widest mb-0.5">PISTA</p>
+          <p className="text-xs text-neutral-700 leading-relaxed">{clue}</p>
+        </div>
+      )}
 
       <div className="flex flex-col" style={{ gap: GAP }}>
         {Array.from({ length: MAX_WORDLE_GUESSES }).map((_, rowIdx) => {
@@ -694,6 +1095,9 @@ export default function Home() {
   const [wordleStates, setWordleStates] = useState<WordleState[]>(() =>
     case2Words.map(() => ({ guesses: [], currentInput: "", won: false, lost: false }))
   );
+
+  // ── Boom Party finished flag for case 5 ──
+  const [boomFinished, setBoomFinished] = useState(false);
 
   // ── Day3 game state for case 3 ──
   const [day3State, setDay3State] = useState<Day3State>({
@@ -1134,7 +1538,13 @@ export default function Home() {
                                 ? "Cuatro palabras ocultas. Cada una guarda un fragmento del código. Descífralas todas para avanzar."
                                 : c.id === 2
                                   ? "Un rosco de 27 letras aguarda. Completa el abecedario y descifra la frase para continuar."
-                                  : "Analiza las evidencias disponibles y descifra el código para avanzar en la investigación."}
+                                  : c.id === 3
+                                    ? "1 vs Chat. Adivina la palabra antes que el chat de Twitch. 10 rondas."
+                                    : c.id === 4
+                                      ? "Un agente de campo ha enviado un perfil psicológico del sujeto. Analízalo para obtener el código."
+                                      : c.id === 5
+                                        ? "¡Los primeros 15 del chat en escribir !play entran al juego! Di palabras con la sílaba indicada o quedarás eliminado."
+                                        : "Analiza las evidencias disponibles y descifra el código para avanzar en la investigación."}
                             </p>
                             <button
                               onClick={e => { e.stopPropagation(); openCase(c.id); }}
@@ -1187,7 +1597,59 @@ export default function Home() {
               </div>
 
               {/* Evidence papers */}
-              {activeCase === 3 ? (
+              {activeCase === 5 ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, ease: "backOut" }}
+                >
+                  <BoomGame onFinish={() => setBoomFinished(true)} username={username} />
+                </motion.div>
+              ) : activeCase === 4 ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.45, ease: "backOut" }}
+                  className="w-full max-w-2xl"
+                >
+                  {/* Agent letter — Day 4 */}
+                  <div className="bg-[#f4f1ea] border border-neutral-300 shadow-lg p-8 relative">
+                    <div className="absolute top-4 right-4 border-2 border-red-800 text-red-800 font-bold px-2 py-1 text-xs rotate-6 opacity-80 tracking-widest">
+                      CONFIDENCIAL
+                    </div>
+
+                    <div className="border-b-2 border-neutral-800 pb-4 mb-6">
+                      <p className="text-neutral-500 text-[10px] tracking-[0.3em] mb-1">PERFIL PSICOLÓGICO — AGENTE DE CAMPO</p>
+                      <h2 className="text-xl font-bold text-neutral-800 tracking-widest">ANÁLISIS DE COMPORTAMIENTO</h2>
+                    </div>
+
+                    <div className="space-y-4 text-sm text-neutral-700 leading-relaxed mb-8">
+                      <p>
+                        Nuestra Agente MoniRapida realizo un perfilamiento psicológico del sujeto basado en sus interacciones recientes. Se identificaron patrones de comportamiento que sugieren una alta capacidad de manipulación y tendencia a la impulsividad. Es crucial considerar estos factores al analizar sus posibles movimientos futuros.
+                      </p>
+                      <p>
+                        [Segundo párrafo: c]
+                      </p>
+                      <p>
+                        [Tercer párrafo: ]
+                      </p>
+                    </div>
+
+                    <div className="border-t border-neutral-300 pt-5 flex items-center justify-between">
+                      <div>
+                        <p className="text-neutral-500 text-[10px] tracking-widest">AGENTE DE CAMPO — CLASIFICADO</p>
+                        <p className="text-neutral-400 text-[10px] tracking-widest mt-0.5">ACCESO NIVEL: ALTO</p>
+                      </div>
+                      <a
+                        href="https://polispol.pages.dev/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-neutral-800 text-[#f4f1ea] px-6 py-2.5 text-xs tracking-[0.25em] hover:bg-neutral-700 transition-colors border border-neutral-700 shrink-0"
+                      >
+                        ACCEDER AL PERFIL →
+                      </a>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : activeCase === 3 ? (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, ease: "backOut" }}
@@ -1242,7 +1704,7 @@ export default function Home() {
                         <motion.div key={i} initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
                           transition={{ duration: 0.45, delay: i * 0.08, ease: "backOut" }}>
                           <WordlePaper
-                            label={w.label} word={w.word} fragment={w.fragment} rotate={w.rotate}
+                            label={w.label} word={w.word} fragment={w.fragment} rotate={w.rotate} clue={w.clue}
                             state={wordleStates[i]}
                             onInput={v => handleWordleInput(i, v)}
                             onSubmit={() => handleWordleSubmit(i)}
@@ -1342,14 +1804,20 @@ export default function Home() {
                   </p>
                 )}
 
-                {activeCase !== 1 && activeCase !== 2 && activeCase !== 3 && (
+                {activeCase === 5 && !boomFinished && (
+                  <p className="text-neutral-400 text-xs tracking-[0.1em] leading-relaxed mb-5">
+                    Juega el Boom Party hasta que haya un ganador para revelar el código.
+                  </p>
+                )}
+
+                {activeCase !== 1 && activeCase !== 2 && activeCase !== 3 && activeCase !== 5 && (
                   <p className="text-neutral-400 text-xs tracking-[0.1em] leading-relaxed mb-5">
                     Analiza las evidencias e ingresa el código descifrado para desbloquear el siguiente caso.
                   </p>
                 )}
 
                 {/* Code input */}
-                {(activeCase !== 3 || day3State.gameFinished) && codeStatus !== "success" ? (
+                {((activeCase !== 3 || day3State.gameFinished) && (activeCase !== 5 || boomFinished)) && codeStatus !== "success" ? (
                   <form onSubmit={handleCodeSubmit} className="flex gap-3">
                     <input
                       type="text"
