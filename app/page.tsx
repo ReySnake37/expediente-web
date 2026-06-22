@@ -48,8 +48,9 @@ type PasapalabraState = {
   finished:     boolean;
 };
 
-type BoomPhase  = "waiting" | "playing" | "finished";
-type BoomPlayer = { name: string; eliminated: boolean };
+type BoomPhase    = "waiting" | "playing" | "roundOver" | "finished";
+type BoomPlayer   = { name: string; eliminated: boolean; score: number };
+type BoomQuestion = { text: string; answer: string };
 
 // ─────────────────────────────────────────────────────────────────
 // Static data
@@ -58,7 +59,7 @@ type BoomPlayer = { name: string; eliminated: boolean };
 const MAX_WORDLE_GUESSES = 5;
 
 const cases = [
-  { id: 1, title: "01: El Comienzo",  code: "SRCD"                    },
+  { id: 1, title: "01: El Comienzo",  code: "INICIO"                    },
   { id: 2, title: "02: Sombras",      code: "SER BUENOS Y SI SON MALOS VIENEN AL CHAT O AL DISCORD Y ME LO CUENTAN" },
   { id: 3, title: "03: Metadatos",    code: "VOID"                    },
   { id: 4, title: "04: La Trampa",    code: "ECHO"                    },
@@ -68,42 +69,44 @@ const cases = [
 ];
 
 const case2Words = [
-  { label: "EVIDENCIA 1", word: "CINEMA",   fragment: "S", rotate: "-rotate-2", clue: "[Pista para CINEMA]"   },
-  { label: "EVIDENCIA 2", word: "TURRENTS", fragment: "R", rotate: "rotate-1",  clue: "[Pista para TURRENTS]" },
-  { label: "EVIDENCIA 3", word: "AVATAR",   fragment: "C", rotate: "rotate-2",  clue: "[Pista para AVATAR]"   },
-  { label: "EVIDENCIA 4", word: "DIRECTO",  fragment: "D", rotate: "-rotate-1", clue: "[Pista para DIRECTO]"  },
+  { label: "EVIDENCIA 1", word: "ACEITUNAS",   fragment: "I", rotate: "-rotate-2",  clue: "Hemos encontrado un alimento que el sospechoso ama comer"   },
+  { label: "EVIDENCIA 2", word: "VENTILADOR", fragment: "N", rotate: "rotate-1",   clue: "El sospechoso olvida sus rutinas y antes de su aparición en público debería tenerlo encendido" },
+  { label: "EVIDENCIA 3", word: "CAMPANADAS",   fragment: "I", rotate: "rotate-2",   clue: "El sospechoso se reune con su comunidad siempre en esta fecha para celebrar"   },
+  { label: "EVIDENCIA 4", word: "MARIACHIS",  fragment: "C", rotate: "-rotate-1",  clue: "En una ocasión lo visitaron en su casa"  },
+  { label: "EVIDENCIA 5", word: "AURONPLAY",   fragment: "I", rotate: "rotate-1.5", clue: "En reiteradas ocasiones se ha visto al sospechoso compartiendo con este personaje"   },
+  { label: "EVIDENCIA 6", word: "TURRENTS",   fragment: "O", rotate: "-rotate-1",  clue: "Es una de las maneras de identificar al sospechoso"   },
 ];
 
 const PASAPALABRA_SENTENCE = "SER BUENOS Y SI SON MALOS VIENEN AL CHAT O AL DISCORD Y ME LO CUENTAN";
 
 const pasapalabraClues = [
-  { letter: "A", clue: "Lugar donde se guardan documentos clasificados",            answer: "A"     },
-  { letter: "B", clue: "Registro cronológico de los eventos de una investigación",  answer: "B"    },
-  { letter: "C", clue: "Persona responsable de cometer el delito",                  answer: "C"    },
-  { letter: "D", clue: "Información recopilada para sostener una acusación",        answer: "D"       },
-  { letter: "E", clue: "Prueba material que sustenta un caso judicial",              answer: "E"   },
-  { letter: "F", clue: "Registro con los datos personales de un sospechoso",        answer: "F"       },
-  { letter: "G", clue: "Persona encargada de la vigilancia de un lugar",            answer: "G"     },
-  { letter: "H", clue: "Crimen que investiga la muerte de una persona",             answer: "H"   },
-  { letter: "I", clue: "Proceso sistemático para descubrir la verdad",              answer: "I"},
-  { letter: "J", clue: "Autoridad que dicta sentencia en un juicio",                answer: "J"        },
-  { letter: "K", clue: "Unidad de almacenamiento digital de información",           answer: "K"    },
-  { letter: "L", clue: "Norma establecida que regula la convivencia en sociedad",   answer: "L"         },
-  { letter: "M", clue: "Razón que impulsa a alguien a cometer un delito",          answer: "M"      },
-  { letter: "N", clue: "Lista oficial de personas registradas o vigiladas",         answer: "N"      },
-  { letter: "Ñ", clue: "Ave corredora sudamericana similar al avestruz",            answer: "Ñ"       },
-  { letter: "O", clue: "Meta principal que se persigue en una investigación",       answer: "O"    },
-  { letter: "P", clue: "Señal o indicio que orienta la investigación",              answer: "P"       },
-  { letter: "Q", clue: "Denuncia formal presentada ante un tribunal",               answer: "Q"    },
-  { letter: "R", clue: "Moderador que llego a alegrar esta hermosa comunidad",        answer: "R" },
-  { letter: "S", clue: "Persona sobre quien recaen sospechas de un delito",        answer: "S"  },
-  { letter: "T", clue: "Persona que presenció un hecho y puede declararlo",        answer: "T"     },
-  { letter: "U", clue: "Grupo especializado de agentes en una operación",           answer: "U"      },
-  { letter: "V", clue: "Persona que sufrió las consecuencias de un delito",        answer: "V"     },
-  { letter: "W", clue: "Red global de información e intercambio digital",           answer: "W"         },
-  { letter: "X", clue: "Técnica que permite reproducir fielmente un documento",    answer: "X"   },
-  { letter: "Y", clue: "Sustancia química utilizada en la detección de huellas",   answer: "Y"        },
-  { letter: "Z", clue: "Área delimitada donde se realiza una búsqueda policial",   answer: "Z"        },
+  { letter: "A", clue: "Inicia: En este lugar el sospechoso asesino una cucaracha.", answer: "Andorra" },
+  { letter: "B", clue: "Inicia: Excusandose en un videojuego el sospechoso fue visto en esta ciudad.", answer: "Berlín" },
+  { letter: "C", clue: "Inicia: Basado en investigaciones creemos que es el postre favorito del sospechoso.", answer: "Cheesecake" },
+  { letter: "D", clue: "Inicia: El sospechoso y sus aliados no permiten que la comunidad solicite esto en sus directos.", answer: "Donación" },
+  { letter: "E", clue: "Inicia: Manera agresiva que emplea el sospechoso para decirle a alguien que 'reaccione'.", answer: "Espabila" },
+  { letter: "F", clue: "Inicia: El sospechoso a comentado mas de una vez que le encantan.", answer: "Fotografias" },
+  { letter: "G", clue: "Contiene la G: Es la bebida mas recurrente del sospechoso.", answer: "Agua" },
+  { letter: "H", clue: "Inicia: El sospechoso tiene un gran interés en estos animales.", answer: "Halcones" },
+  { letter: "I", clue: "Inicia: Las interacciones con este personaje lo hicieron replantear el tener hijos.", answer: "Imantado" },
+  { letter: "J", clue: "Inicia: Cada momento en el que el sospechoso se siente cansado habla de esto.", answer: "Jubilación" },
+  { letter: "K", clue: "Contiene la K: El sospechoso fue visto trabajando con esta marca.", answer: "Phoskitos" },
+  { letter: "L", clue: "Inicia: El sospechoso tiene algunas cajas pendientes de este elemento.", answer: "Lego" },
+  { letter: "M", clue: "Inicia: El equipo que apoya al sospechoso.", answer: "Mods" },
+  { letter: "N", clue: "Inicia: El sospechoso a demostrado gran amor por esta fecha.", answer: "Navidad" },
+  { letter: "Ñ", clue: "Contiene la Ñ: Nacionalidad del sospechoso.", answer: "Español" },
+  { letter: "O", clue: "Inicia: En ocasiones cuando se dirijen al sujeto con terminos Otakus el responde de esta manera.", answer: "onii chan" },
+  { letter: "P", clue: "Inicia: El sujeto siempre se queja de dolor en esta zona.", answer: "Pies" },
+  { letter: "Q", clue: "Inicia: Cuando te piden un pedacito es de", answer: "Queso" },
+  { letter: "R", clue: "Inicia: El sospechoso tiene tendencia a convertir este genero musical en poesia.", answer: "Reggaeton" },
+  { letter: "S", clue: "Inicia: En este país el sospechoso fue testigo de un accidente.", answer: "Senegal" },
+  { letter: "T", clue: "Inicia: El sospechoso abiertamente a declarado su odio a esta persona.", answer: "Tebas" },
+  { letter: "U", clue: "Inicia: En este lugar el sospechoso habito una evento llamado 'Exodo'.", answer: "Universo" },
+  { letter: "V", clue: "Contiene la V: El sospechoso fue visto trabajando mayormente en este medio.", answer: "Television" },
+  { letter: "W", clue: "Inicia: En epocas antiguas el sospechoso usaba este dispositivo para escuchar música.", answer: "Walkman" },
+  { letter: "X", clue: "Contiene la X: En esta seríe el sospechoso fue visto trabajando como psicologo.", answer: "Extremo" },
+  { letter: "Y", clue: "Contiene la Y: El sospechoso fue visto explorando cuevas con esta persona.", answer: "Mayichi" },
+  { letter: "Z", clue: "Contiene la Z: En esta ciudad el sospechoso fue visto trabajando con la doble V.", answer: "Zaragoza" }
 ];
 
 const evidencePapers = [
@@ -136,22 +139,80 @@ const day3Rounds: Day3RoundData[] = [
   { images: ["day3/r10_1.jpg","day3/r10_2.jpg","day3/r10_3.jpg","day3/r10_4.jpg"], word: "cosa" },
 ];
 
-const TURN_SECONDS      = 15;
-const MAX_BOOM_PLAYERS  = 15;
+const MAX_BOOM_PLAYERS   = 3;
+const TOTAL_ROUNDS       = 3;
 const BOOM_CIRCLE_SIZE   = 340;
 const BOOM_CIRCLE_CENTER = BOOM_CIRCLE_SIZE / 2;
 const BOOM_CIRCLE_RADIUS = 140;
 
-const BOOM_SYLLABLES = [
-  "PA", "CA", "MA", "LA", "TA", "SA", "RA", "DA", "BA", "GA", "NA", "VA",
-  "PE", "ME", "LE", "TE", "SE", "RE", "DE", "BE", "NE", "VE",
-  "PI", "MI", "LI", "TI", "SI", "RI", "DI", "BI", "NI", "VI",
-  "PO", "CO", "MO", "LO", "TO", "SO", "RO", "DO", "NO", "VO",
-  "PU", "CU", "MU", "LU", "TU", "SU", "RU", "BU", "NU",
-  "AN", "EN", "ON", "UN", "AL", "EL", "AR", "ER", "OR",
-  "PLA", "CLA", "FLA", "BLA", "TRA", "GRA", "FRA", "BRA", "PRE", "TRE",
-  "CON", "COM", "CAN", "TAN", "MAN", "PAN", "SON", "MON", "DON", "RON",
-  "SIN", "LIN", "MIN", "TIN", "MEN", "TEN", "VEN", "LEN",
+const BOOM_QUESTIONS: BoomQuestion[] = [
+  { text: "¿A qué huele Pol?", answer: "PALOMITAS" },
+  { text: "¿A dónde fue Pol en su #AD de un coche?", answer: "CANFRANC" },
+  { text: "¿Qué le robó Noni a Pol?", answer: "SETUP" },
+  { text: "¿Qué juego le piden a Pol reiteradamente?", answer: "AMONGUS" },
+  { text: "¿Con qué juego funaron a Pol?", answer: "FIFA" },
+  { text: "¿Qué hizo llorar a Pol en Tortilla 2?", answer: "FANTASMAS" },
+  { text: "¿Qué canción cantó Pol en Bellum?", answer: "PEACHES" },
+  { text: "¿Qué IRL hace Pol cada año?", answer: "ESTRELLAS" },
+  { text: "¿A qué evento de gala llevó Pol a Axozer?", answer: "GOYA" },
+  { text: "¿Qué regalo de Pol reventó en directo Auron?", answer: "BERENJENA" },
+  { text: "¿Quién es la superamiga de Pol?", answer: "LA POBLET" },
+  { text: "¿Por qué película se pintó las uñas Pol?", answer: "WICKED" },
+  { text: "¿Cuál es el nombre de la cantante que Pol escucha cada año en diciembre?", answer: "MARIAH" },
+  { text: "¿Cuál es el nombre del cuervo favorito de Pol?", answer: "FOCUS" },
+  { text: "¿Qué tiene Pol pegado en el techo del setup?", answer: "MANOS LOCAS" },
+  { text: "¿Qué animal es Trufa?", answer: "GATO" },
+  { text: "¿Cuál fue la primera receta con VdeBikingo?", answer: "ESPAGUETIS" },
+  { text: "¿Qué se pone Pol por puntos del canal?", answer: "PELUCA" },
+  { text: "¿Cuál es el grito cuando alguien se suscribe?", answer: "COWABUNGA" },
+  { text: "¿Cómo empieza la canción de inicio del stream?", answer: "TIME" },
+  { text: "¿Cómo acaba la canción de inicio del stream?", answer: "ENDS" },
+  { text: "¿Qué imagen aparece al final de todos los streams?", answer: "DVD" },
+  { text: "¿Cuál es el streamer con el que ha hecho más tik toks?", answer: "NONI" },
+  { text: "¿Cuál es el género de cine favorito de Pol?", answer: "MUSICALES" },
+  { text: "¿Cuál es el sitio más raro en el que Pol ha montado un PC?", answer: "NORIA" },
+  { text: "¿A quién no ha conseguido grabar un videoclip a pesar de insistirle?", answer: "JOKKI" },
+  { text: "¿Qué lee Pol en sus reels en blanco y negro?", answer: "POESÍA" },
+  { text: "¿De qué fruta era el jugo más asqueroso que probó Pol?", answer: "NONI" },
+  { text: "¿En qué evento grabó un reel en el baño con Roier?", answer: "LA VELADA" },
+  { text: "¿Nombre del creador de contenido con el que comparan a Pol?", answer: "PACO" },
+  { text: "¿Banda musical favorita de Pol?", answer: "ABBA" },
+  { text: "¿Juego favorito de Pol?", answer: "GEOGUESSR" },
+  { text: "¿Rango que adquirió Pol en Twitch?", answer: "EMBARAZADOR" },
+  { text: "¿Pol es director de?", answer: "FOTOGRAFÍA" },
+  { text: "¿Pol vive en?", answer: "BARCELONA" },
+  { text: "¿Marca favorita de cámaras de Pol?", answer: "SONY" },
+  { text: "¿Lugar favorito de Barcelona de Pol?", answer: "LA SAGRADA FAMILIA" },
+  { text: "¿Lengua que habla Pol además del Español?", answer: "CATALAN" },
+  { text: "¿Que artista le escribio una canción a Pol?", answer: "PEP SALA" },
+  { text: "¿Nombre del canción que Pep Sala le escribio a Pol?", answer: "NÚVOLS DE COLOR" },
+  { text: "¿Con que pelicula nominaron a Pol a \"mejor dirección de fotografía en los premios Gaudí\"?", answer: "XTREMS" },
+  { text: "¿Moderadora Chilena del canal de Polispol?", answer: "SUUGGIE" },
+  { text: "¿Genia creativa detras de los emotes y badges de Polispol?", answer: "CABRUU" },
+  { text: "¿Nombre del bloc de Pol donde nos habla de Fotografía?", answer: "DIRECTORDEFOTOGRAFIA" },
+  { text: "¿Nombre del cine favorito de Pol?", answer: "PHENOMENA" },
+  { text: "¿Pelicula en la que Pol participo como Director de Fotografía rodada en Madrid?", answer: "VENUS" },
+  { text: "¿Como se le llama a la comunidad que creo Polispol?", answer: "POLICARPIERS" },
+  { text: "¿Pol conocio a Jon M. Chu, director de?", answer: "WICKED" },
+  { text: "¿Que personaje de Toy Story fue secustrado por Pol?", answer: "WOODY" },
+  { text: "¿Moderador que se caso con una seguidora del canal?", answer: "DOOPA" },
+  { text: "¿Miembro de la comunidad que destaca por tener GIF de cualquier tema del canal?", answer: "MONIRAPIDA" },
+  { text: "¿Moderador que le gana a Pol en Tetris?", answer: "DAHER" },
+  { text: "¿Moderadora Colombiana Fan de BTS?", answer: "STEPHY" },
+  { text: "¿El video clip llamado \"Una vida por delante\" dirigido por Pol es de?", answer: "NACH" },
+  { text: "¿Red social que premio a Polispol?", answer: "TIKTOK" },
+  { text: "¿Pol coordino y superviso la transición de 4:3 a 16:9 para Aragón TV y ...?", answer: "TV3" },
+  { text: "¿Colega Masón de Pol CEO de Twtich?", answer: "DAN CLANCY" },
+  { text: "¿Amiga de Pol que vive en el campo?", answer: "POBLET" },
+  { text: "¿Marca del coche de Pol?", answer: "TOYOTA" },
+  { text: "¿Fornite llevo a Pol a un evento en los?", answer: "ANGELES" },
+  { text: "¿Animal al que la comunidad le hacia seguimiento a sus crias?", answer: "HALCON" },
+  { text: "¿Que elemento del Setup Pol quiere cambiar hace meses y no lo hace?", answer: "SILLA" },
+  { text: "¿Seríe en la que Pol nos prometio un barco de cine y no lo hizo?", answer: "PELAGO" },
+  { text: "¿Como se refiere Pol a los viewers?", answer: "CHAT/CERDOS V:" },
+  { text: "¿País de latinoamerica en el que vivio Pol?", answer: "ARGENTINA" },
+  { text: "¿Director de las peliculas de Batman favoritas donde aparece el Jokker favorito de Pol?", answer: "TIM BURTON" },
+  { text: "¿Pais en el que Pol encontro un accidente en GeoGuessr?", answer: "SENEGAL" },
 ];
 
 const slideVariants = {
@@ -242,7 +303,7 @@ function PasapalabraGame({
       <div className="border-b border-neutral-400 pb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-neutral-600" />
-          <span className="text-xs font-bold text-neutral-800 tracking-widest">ROSCO — ABECEDARIO</span>
+          <span className="text-xs font-bold text-neutral-800 tracking-widest">PASAPALABRAS — ABECEDARIO</span>
         </div>
         {!state.finished && (
           <span className="text-xs text-neutral-600 tracking-widest">{pendingCount} pendientes</span>
@@ -330,7 +391,7 @@ function PasapalabraGame({
       {state.finished ? (
         <p className="text-center text-xs text-neutral-600 tracking-[0.1em] py-1">
           {incorrectCount === 0
-            ? "¡Rosco completado! Frase revelada íntegramente."
+            ? "¡Pasapalabras completado! Frase revelada íntegramente."
             : `${incorrectCount} error${incorrectCount !== 1 ? "es" : ""}. ${incorrectCount} letra${incorrectCount !== 1 ? "s" : ""} de la frase ocultada${incorrectCount !== 1 ? "s" : ""}.`}
         </p>
       ) : (
@@ -588,14 +649,15 @@ function Day3Game({
 // ─────────────────────────────────────────────────────────────────
 
 function BoomGame({ onFinish, username }: { onFinish: () => void; username: string }) {
-  const [phase,      setPhase]      = useState<BoomPhase>("waiting");
-  const [players,    setPlayers]    = useState<BoomPlayer[]>([]);
-  const [currentIdx, setCurrentIdx] = useState(0);
-  const [syllable,   setSyllable]   = useState("");
-  const [usedWords,  setUsedWords]  = useState<string[]>([]);
-  const [timeLeft,   setTimeLeft]   = useState(TURN_SECONDS);
-  const [winner,     setWinner]     = useState<string | null>(null);
-  const [chatMsgs,   setChatMsgs]   = useState<{ id: number; user: string; text: string; highlight: boolean }[]>([]);
+  const [phase,         setPhase]         = useState<BoomPhase>("waiting");
+  const [roundNumber,   setRoundNumber]   = useState(1);
+  const [players,       setPlayers]       = useState<BoomPlayer[]>([]);
+  const [currentIdx,    setCurrentIdx]    = useState(0);
+  const [question,      setQuestion]      = useState<BoomQuestion | null>(null);
+  const [usedQIdxs,     setUsedQIdxs]     = useState<number[]>([]);
+  const [timeLeft,      setTimeLeft]      = useState(5);
+  const [roundWinner,   setRoundWinner]   = useState<string | null>(null);
+  const [chatMsgs,      setChatMsgs]      = useState<{ id: number; user: string; text: string; highlight: boolean }[]>([]);
   const [connected,     setConnected]     = useState(false);
   const [streamerInput, setStreamerInput] = useState("");
 
@@ -603,19 +665,26 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
   const phaseRef      = useRef<BoomPhase>("waiting");
   const playersRef    = useRef<BoomPlayer[]>([]);
   const currentIdxRef = useRef(0);
-  const syllableRef   = useRef("");
-  const usedWordsRef  = useRef<string[]>([]);
+  const questionRef   = useRef<BoomQuestion | null>(null);
+  const usedQIdxsRef  = useRef<number[]>([]);
   const onFinishRef   = useRef(onFinish);
 
   phaseRef.current      = phase;
   playersRef.current    = players;
   currentIdxRef.current = currentIdx;
-  syllableRef.current   = syllable;
-  usedWordsRef.current  = usedWords;
+  questionRef.current   = question;
+  usedQIdxsRef.current  = usedQIdxs;
   onFinishRef.current   = onFinish;
 
-  function pickSyllable() {
-    return BOOM_SYLLABLES[Math.floor(Math.random() * BOOM_SYLLABLES.length)];
+  function timerFor(idx: number, arr: BoomPlayer[]): number {
+    return arr[idx]?.name.toLowerCase() === username.toLowerCase() ? 4 : 5;
+  }
+
+  function pickQuestion(used: number[]): { q: BoomQuestion; qIdx: number } {
+    const available = BOOM_QUESTIONS.map((_, i) => i).filter(i => !used.includes(i));
+    const pool = available.length > 0 ? available : BOOM_QUESTIONS.map((_, i) => i);
+    const qIdx = pool[Math.floor(Math.random() * pool.length)];
+    return { q: BOOM_QUESTIONS[qIdx], qIdx };
   }
 
   function getNextAliveIdx(from: number, arr: BoomPlayer[]): number {
@@ -634,52 +703,74 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
     return players[currentIdx]?.name.toLowerCase() === username.toLowerCase();
   }
 
-  function handleStreamerWordSubmit(e: React.SyntheticEvent) {
-    e.preventDefault();
-    if (phase !== "playing" || !isStreamerTurn()) return;
-    const normalized = normalizeAnswer(streamerInput);
-    const syl        = normalizeAnswer(syllable);
-    if (!normalized || !normalized.includes(syl) || usedWords.includes(normalized)) {
-      setStreamerInput("");
-      return;
-    }
-    setUsedWords(prev => [...prev, normalized]);
-    const next = getNextAliveIdx(currentIdx, players);
-    setCurrentIdx(next);
-    setSyllable(pickSyllable());
-    setTimeLeft(TURN_SECONDS);
-    setStreamerInput("");
+  // Called when only 1 player remains — ends the current round
+  function endRound(finalPlayers: BoomPlayer[]) {
+    const w = finalPlayers.find(p => !p.eliminated)?.name ?? "Nadie";
+    setRoundWinner(w);
+    setPlayers(finalPlayers);
+    setPhase("roundOver");
   }
 
-  // Seed the streamer as the first player on mount
+  // Advance to next player after a correct answer or timeout
+  function advanceTurn(updatedPlayers: BoomPlayer[], fromIdx: number) {
+    if (countAlive(updatedPlayers) <= 1) { endRound(updatedPlayers); return; }
+    const next = getNextAliveIdx(fromIdx, updatedPlayers);
+    const { q, qIdx } = pickQuestion(usedQIdxsRef.current);
+    setUsedQIdxs(prev => [...prev, qIdx]);
+    setQuestion(q);
+    setCurrentIdx(next);
+    setTimeLeft(timerFor(next, updatedPlayers));
+    setPlayers(updatedPlayers);
+  }
+
+  // Called when streamer clicks "Siguiente Ronda" or "Finalizar"
+  function handleNextRound() {
+    if (roundNumber >= TOTAL_ROUNDS) {
+      setPhase("finished");
+      onFinishRef.current();
+      return;
+    }
+    const newRound = roundNumber + 1;
+    setRoundNumber(newRound);
+    setRoundWinner(null);
+    setQuestion(null);
+    setUsedQIdxs([]);
+    setChatMsgs([]);
+    setCurrentIdx(0);
+    setStreamerInput("");
+    setPlayers([{ name: username.trim() || "POLISPOL", eliminated: false, score: 0 }]);
+    setPhase("waiting");
+  }
+
+  function handleStreamerSubmit(e: React.SyntheticEvent) {
+    e.preventDefault();
+    if (phase !== "playing" || !isStreamerTurn() || !questionRef.current) return;
+    const normalized = normalizeAnswer(streamerInput);
+    const expected   = normalizeAnswer(questionRef.current.answer);
+    setStreamerInput("");
+    if (!normalized || normalized !== expected) return;
+    const updated = playersRef.current.map((p, i) =>
+      i === currentIdxRef.current ? { ...p, score: p.score + 1 } : p
+    );
+    advanceTurn(updated, currentIdxRef.current);
+  }
+
+  // Seed streamer as first player on mount
   useEffect(() => {
-    const name = username.trim() || "POLISPOL";
-    setPlayers([{ name, eliminated: false }]);
+    setPlayers([{ name: username.trim() || "POLISPOL", eliminated: false, score: 0 }]);
   }, []);
 
   // Countdown timer — eliminates current player on timeout
   useEffect(() => {
     if (phase !== "playing") return;
     if (timeLeft <= 0) {
-      const capturedIdx = currentIdxRef.current;
-      const cur = playersRef.current[capturedIdx];
+      const idx = currentIdxRef.current;
+      const cur = playersRef.current[idx];
       if (!cur || cur.eliminated) return;
       const updated = playersRef.current.map((p, i) =>
-        i === capturedIdx ? { ...p, eliminated: true } : p
+        i === idx ? { ...p, eliminated: true } : p
       );
-      const alive = countAlive(updated);
-      setPlayers(updated);
-      if (alive <= 1) {
-        const w = updated.find(p => !p.eliminated)?.name ?? "Nadie";
-        setWinner(w);
-        setPhase("finished");
-        onFinishRef.current();
-      } else {
-        const next = getNextAliveIdx(capturedIdx, updated);
-        setCurrentIdx(next);
-        setSyllable(pickSyllable());
-        setTimeLeft(TURN_SECONDS);
-      }
+      advanceTurn(updated, idx);
       return;
     }
     const t = setTimeout(() => setTimeLeft(p => p - 1), 1000);
@@ -690,7 +781,7 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMsgs]);
 
-  // Twitch IRC — registration + answer detection
+  // Twitch IRC — registration (!imitator) + answer detection
   useEffect(() => {
     const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
     ws.onopen = () => {
@@ -713,11 +804,11 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
       ).toLowerCase();
 
       if (phaseRef.current === "waiting") {
-        if (text.toLowerCase() === "!play") {
+        if (text.toLowerCase() === "!imitator") {
           setPlayers(prev => {
             if (prev.length >= MAX_BOOM_PLAYERS) return prev;
             if (prev.some(p => p.name.toLowerCase() === user)) return prev;
-            return [...prev, { name: user, eliminated: false }];
+            return [...prev, { name: user, eliminated: false, score: 0 }];
           });
         }
         return;
@@ -726,23 +817,21 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
       if (phaseRef.current === "playing") {
         const cur     = playersRef.current[currentIdxRef.current];
         const baseMsg = { id: Date.now() + Math.random(), user, text, highlight: false };
-        if (!cur || cur.name.toLowerCase() !== user) {
+        if (!cur || cur.name.toLowerCase() !== user || !questionRef.current) {
           setChatMsgs(prev => [...prev.slice(-49), baseMsg]);
           return;
         }
         const normalized = normalizeAnswer(text);
-        const syl        = normalizeAnswer(syllableRef.current);
-        if (!normalized.includes(syl) || usedWordsRef.current.includes(normalized)) {
+        const expected   = normalizeAnswer(questionRef.current.answer);
+        if (normalized !== expected) {
           setChatMsgs(prev => [...prev.slice(-49), baseMsg]);
           return;
         }
-        // Valid answer — advance turn
         setChatMsgs(prev => [...prev.slice(-49), { ...baseMsg, highlight: true }]);
-        setUsedWords(prev => [...prev, normalized]);
-        const next = getNextAliveIdx(currentIdxRef.current, playersRef.current);
-        setCurrentIdx(next);
-        setSyllable(pickSyllable());
-        setTimeLeft(TURN_SECONDS);
+        const updated = playersRef.current.map((p, i) =>
+          i === currentIdxRef.current ? { ...p, score: p.score + 1 } : p
+        );
+        advanceTurn(updated, currentIdxRef.current);
       }
     };
     return () => ws.close();
@@ -756,11 +845,9 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
       {/* Header */}
       <div className="flex items-center justify-between">
         <span className="text-neutral-400 text-xs tracking-widest">
-          {phase === "waiting"
-            ? `REGISTRO: ${players.length} / ${MAX_BOOM_PLAYERS}`
-            : phase === "playing"
-              ? `${countAlive(players)} JUGADORES EN JUEGO`
-              : "PARTIDA FINALIZADA"}
+          {phase === "finished"
+            ? "PARTIDA FINALIZADA"
+            : `RONDA ${roundNumber} / ${TOTAL_ROUNDS}${phase === "playing" ? ` — ${countAlive(players)} EN JUEGO` : ""}`}
         </span>
         <div className={`flex items-center gap-1.5 text-[10px] tracking-widest ${connected ? "text-green-500" : "text-neutral-600"}`}>
           <span className={`w-1.5 h-1.5 rounded-full ${connected ? "bg-green-500" : "bg-neutral-600"}`} />
@@ -768,13 +855,13 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
         </div>
       </div>
 
-      {/* Waiting phase */}
+      {/* Waiting — player registration */}
       {phase === "waiting" && (
         <div className="flex flex-col gap-4">
           <div className="bg-neutral-800/40 border border-neutral-700 p-4">
             <p className="text-neutral-400 text-xs tracking-widest mb-3">
               Los primeros <span className="text-amber-400 font-bold">{MAX_BOOM_PLAYERS}</span> en escribir{" "}
-              <span className="text-amber-400 font-bold">!play</span> en el chat participarán.
+              <span className="text-amber-400 font-bold">!imitator</span> en el chat participarán en la ronda {roundNumber}.
             </p>
             <div className="flex flex-wrap gap-2 min-h-[32px]">
               {players.map((p, i) => (
@@ -790,9 +877,11 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
           <button
             onClick={() => {
               if (players.length < 2) return;
-              setSyllable(pickSyllable());
+              const { q, qIdx } = pickQuestion([]);
+              setQuestion(q);
+              setUsedQIdxs([qIdx]);
               setCurrentIdx(0);
-              setTimeLeft(TURN_SECONDS);
+              setTimeLeft(timerFor(0, players));
               setPhase("playing");
             }}
             disabled={players.length < 2}
@@ -800,16 +889,50 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
           >
             {players.length < 2
               ? `ESPERANDO JUGADORES (${players.length} / ${MAX_BOOM_PLAYERS})`
-              : `INICIAR CON ${players.length} JUGADORES`}
+              : `INICIAR RONDA ${roundNumber} CON ${players.length} JUGADORES`}
           </button>
         </div>
       )}
 
-      {/* Playing / finished */}
-      {phase !== "waiting" && (
+      {/* Round over — show winner + next round / finish button */}
+      {phase === "roundOver" && (
+        <div className="flex flex-col gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+            className="border border-amber-600 bg-amber-950/40 p-6 text-center"
+          >
+            <p className="text-[10px] tracking-widest text-amber-500/70 mb-1">
+              GANADOR / GANADORA — RONDA {roundNumber}
+            </p>
+            <p className="text-2xl font-bold text-amber-400 tracking-widest break-words mt-2">
+              {roundWinner}
+            </p>
+          </motion.div>
+          <button
+            onClick={handleNextRound}
+            className="w-full bg-neutral-800 text-neutral-100 py-3 text-sm tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-700"
+          >
+            {roundNumber >= TOTAL_ROUNDS ? "FINALIZAR PARTIDA →" : `RONDA ${roundNumber + 1} →`}
+          </button>
+        </div>
+      )}
+
+      {/* Finished — all rounds done */}
+      {phase === "finished" && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          className="border border-neutral-600 bg-neutral-800/40 p-6 text-center"
+        >
+          <p className="text-[10px] tracking-widest text-neutral-500 mb-2">PARTIDA COMPLETADA — {TOTAL_ROUNDS} RONDAS</p>
+          <p className="text-neutral-400 text-sm">Ingresa el código para continuar.</p>
+        </motion.div>
+      )}
+
+      {/* Playing — circle + right panel */}
+      {phase === "playing" && (
         <div className="flex gap-4 items-start">
 
-          {/* Circle with rotating arrow */}
+          {/* Circle */}
           <div
             className="relative shrink-0"
             style={{ width: BOOM_CIRCLE_SIZE, height: BOOM_CIRCLE_SIZE }}
@@ -818,24 +941,24 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
               const angle  = -Math.PI / 2 + (i / players.length) * 2 * Math.PI;
               const x      = BOOM_CIRCLE_CENTER + BOOM_CIRCLE_RADIUS * Math.cos(angle);
               const y      = BOOM_CIRCLE_CENTER + BOOM_CIRCLE_RADIUS * Math.sin(angle);
-              const isCurr = i === currentIdx && phase === "playing";
+              const isCurr = i === currentIdx;
               return (
                 <div
                   key={i}
                   style={{ left: x, top: y, transform: "translate(-50%,-50%)", position: "absolute" }}
-                  className={`px-1.5 py-0.5 text-[9px] font-bold tracking-wide border text-center w-[72px] truncate transition-colors
+                  className={`px-1.5 py-0.5 text-[9px] font-bold tracking-wide border text-center w-[72px] transition-colors
                     ${p.eliminated
                       ? "bg-neutral-900 border-neutral-800 text-neutral-700 line-through"
                       : isCurr
                         ? "bg-amber-400 border-amber-500 text-neutral-900"
                         : "bg-neutral-800 border-neutral-600 text-neutral-200"}`}
                 >
-                  {p.name}
+                  <div className="truncate">{p.name}</div>
                 </div>
               );
             })}
 
-            {/* Arrow pointing at current player — SVG so transform-origin is exact */}
+            {/* Arrow */}
             <svg
               className="absolute inset-0 pointer-events-none"
               width={BOOM_CIRCLE_SIZE}
@@ -848,64 +971,56 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
                   transition: "transform 0.6s ease",
                 }}
               >
-                {/* stem: starts 52px above center, ends 20px before player name */}
                 <line
-                  x1={BOOM_CIRCLE_CENTER}
-                  y1={BOOM_CIRCLE_CENTER - 52}
-                  x2={BOOM_CIRCLE_CENTER}
-                  y2={BOOM_CIRCLE_CENTER - BOOM_CIRCLE_RADIUS + 22}
-                  stroke="#fbbf24"
-                  strokeWidth="3"
-                  strokeLinecap="round"
+                  x1={BOOM_CIRCLE_CENTER} y1={BOOM_CIRCLE_CENTER - 52}
+                  x2={BOOM_CIRCLE_CENTER} y2={BOOM_CIRCLE_CENTER - BOOM_CIRCLE_RADIUS + 22}
+                  stroke="#fbbf24" strokeWidth="3" strokeLinecap="round"
                 />
-                {/* arrowhead */}
                 <polygon
-                  points={`
-                    ${BOOM_CIRCLE_CENTER},${BOOM_CIRCLE_CENTER - BOOM_CIRCLE_RADIUS + 5}
-                    ${BOOM_CIRCLE_CENTER - 8},${BOOM_CIRCLE_CENTER - BOOM_CIRCLE_RADIUS + 23}
-                    ${BOOM_CIRCLE_CENTER + 8},${BOOM_CIRCLE_CENTER - BOOM_CIRCLE_RADIUS + 23}
-                  `}
+                  points={`${BOOM_CIRCLE_CENTER},${BOOM_CIRCLE_CENTER - BOOM_CIRCLE_RADIUS + 5} ${BOOM_CIRCLE_CENTER - 8},${BOOM_CIRCLE_CENTER - BOOM_CIRCLE_RADIUS + 23} ${BOOM_CIRCLE_CENTER + 8},${BOOM_CIRCLE_CENTER - BOOM_CIRCLE_RADIUS + 23}`}
                   fill="#fbbf24"
                 />
               </g>
             </svg>
 
-            {/* Syllable + timer in center — only during playing */}
-            {phase === "playing" && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-3xl font-bold tracking-widest text-neutral-100 mb-1">{syllable}</span>
-                <span className={`text-xl font-bold tabular-nums ${
-                  timeLeft <= 5 ? "text-red-400" : timeLeft <= 10 ? "text-yellow-400" : "text-green-400"
-                }`}>
-                  {timeLeft}s
-                </span>
-              </div>
-            )}
+            {/* Timer */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <span className={`text-5xl font-bold tabular-nums ${
+                timeLeft <= 2 ? "text-red-400" : timeLeft <= 3 ? "text-yellow-400" : "text-green-400"
+              }`}>
+                {timeLeft}
+              </span>
+            </div>
           </div>
 
-          {/* Right panel: current turn / winner + chat */}
+          {/* Right panel */}
           <div className="flex-1 flex flex-col gap-3 min-w-0">
-            {phase === "playing" && (
-              <div className="bg-neutral-800/60 border border-neutral-700 p-3">
-                <p className="text-[10px] text-neutral-500 tracking-widest mb-1">TURNO DE</p>
-                <p className="text-sm font-bold text-amber-400 tracking-wider truncate">
-                  {players[currentIdx]?.name}
-                </p>
-                <p className="text-xs text-neutral-400 mt-1.5">
-                  Di una palabra con{" "}
-                  <span className="text-neutral-100 font-bold text-sm">"{syllable}"</span>
-                </p>
+
+            {/* Question */}
+            {question && (
+              <div className="bg-neutral-900 border border-neutral-600 p-3">
+                <p className="text-[10px] text-neutral-500 tracking-widest mb-1.5">PREGUNTA</p>
+                <p className="text-sm text-neutral-100 leading-relaxed">{question.text}</p>
               </div>
             )}
 
-            {phase === "playing" && isStreamerTurn() && (
-              <form onSubmit={handleStreamerWordSubmit} className="flex gap-2">
+            {/* Turn */}
+            <div className="bg-neutral-800/60 border border-neutral-700 px-3 py-2">
+              <p className="text-[10px] text-neutral-500 tracking-widest mb-0.5">TURNO DE</p>
+              <p className="text-sm font-bold text-amber-400 tracking-wider truncate">
+                {players[currentIdx]?.name}
+              </p>
+            </div>
+
+            {/* Streamer input */}
+            {isStreamerTurn() && (
+              <form onSubmit={handleStreamerSubmit} className="flex gap-2">
                 <input
                   type="text"
                   value={streamerInput}
-                  onChange={e => setStreamerInput(e.target.value.toUpperCase())}
-                  className="flex-1 min-w-0 bg-neutral-900 border border-amber-600 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-amber-400 tracking-[0.2em] uppercase placeholder:text-neutral-600 placeholder:normal-case placeholder:tracking-normal"
-                  placeholder={`Palabra con "${syllable}"`}
+                  onChange={e => setStreamerInput(e.target.value)}
+                  className="flex-1 min-w-0 bg-neutral-900 border border-amber-600 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-amber-400 placeholder:text-neutral-600"
+                  placeholder="Tu respuesta..."
                   autoComplete="off"
                   autoFocus
                 />
@@ -919,19 +1034,10 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
               </form>
             )}
 
-            {phase === "finished" && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                className="border border-amber-600 bg-amber-950/40 p-4 text-center"
-              >
-                <p className="text-[10px] tracking-widest text-amber-500/70 mb-2">GANADOR / GANADORA</p>
-                <p className="text-xl font-bold text-amber-400 tracking-widest break-words">{winner}</p>
-              </motion.div>
-            )}
-
+            {/* Chat */}
             <div className="flex flex-col gap-1">
               <p className="text-[10px] text-neutral-600 tracking-widest">CHAT — #{TWITCH_CHANNEL}</p>
-              <div className="overflow-y-auto max-h-[30vh] flex flex-col gap-0.5">
+              <div className="overflow-y-auto max-h-[22vh] flex flex-col gap-0.5">
                 {chatMsgs.length === 0 && (
                   <p className="text-neutral-700 text-[10px] italic">Sin mensajes aún...</p>
                 )}
@@ -948,8 +1054,8 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
                 <div ref={chatEndRef} />
               </div>
             </div>
-          </div>
 
+          </div>
         </div>
       )}
     </div>
@@ -1533,15 +1639,15 @@ export default function Home() {
                         )}
                         {accessible && (
                           <div className="mt-auto">
-                            <p className="text-sm text-neutral-600 mb-4 line-clamp-3">
+                            <p className="text-sm text-neutral-600 mb-4">
                               {c.id === 1
-                                ? "Cuatro palabras ocultas. Cada una guarda un fragmento del código. Descífralas todas para avanzar."
+                                ? "El día de hoy inicia la investigación del sospechoso, iniciaremos con un analisis que requiere descifrar algunas palabras clave relacionadas a su entorno y actividades recientes."
                                 : c.id === 2
-                                  ? "Un rosco de 27 letras aguarda. Completa el abecedario y descifra la frase para continuar."
+                                  ? "El día de hoy requerimos encontrar una frase clave empleada por el sospechoso en sus comunicaciones, para ello debemos encontrar su comportamiento con respecto a las letras que conforman el alfabeto."
                                   : c.id === 3
-                                    ? "1 vs Chat. Adivina la palabra antes que el chat de Twitch. 10 rondas."
+                                    ? "Ya logramos identificar algunas tendencias del sospechoso, ahora necesitamos analizar su comportamiento en situaciones bajo presión."
                                     : c.id === 4
-                                      ? "Un agente de campo ha enviado un perfil psicológico del sujeto. Analízalo para obtener el código."
+                                      ? "Nuestra agente MoniRapida nos ha contactado el día de hoy."
                                       : c.id === 5
                                         ? "¡Los primeros 15 del chat en escribir !play entran al juego! Di palabras con la sílaba indicada o quedarás eliminado."
                                         : "Analiza las evidencias disponibles y descifra el código para avanzar en la investigación."}
@@ -1664,25 +1770,7 @@ export default function Home() {
                 </motion.div>
               ) : activeCase === 2 ? (
                 <div className="flex flex-col gap-6 w-full max-w-2xl">
-                  {/* Single evidence paper */}
-                  <motion.div
-                    initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-                    transition={{ duration: 0.45, ease: "backOut" }}
-                    className="bg-[#f4f1ea] border border-neutral-300 shadow-lg p-5 flex flex-col gap-3"
-                  >
-                    <div className="border-b border-neutral-400 pb-2 flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-neutral-600" />
-                      <span className="text-sm font-bold text-neutral-800 tracking-widest">EVIDENCIA 1</span>
-                    </div>
-                    <div className="bg-neutral-200 border border-dashed border-neutral-400 flex flex-col items-center justify-center gap-1 h-28">
-                      <ImageIcon className="w-6 h-6 text-neutral-400" />
-                      <span className="text-neutral-400 text-xs tracking-widest">[ IMAGEN ]</span>
-                    </div>
-                    <p className="text-xs text-neutral-600 leading-relaxed">
-                      Los metadatos del archivo revelan patrones ocultos. Completa el rosco de 27 letras del abecedario para descifrar el mensaje. Cada respuesta incorrecta ocultará una letra de la frase final.
-                    </p>
-                  </motion.div>
-
+                             
                   {/* Pasapalabra game */}
                   <motion.div
                     initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
@@ -1698,7 +1786,7 @@ export default function Home() {
                   </motion.div>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-6 w-full max-w-2xl">
+                <div className="grid grid-cols-3 gap-6 w-full max-w-2xl">
                   {activeCase === 1
                     ? case2Words.map((w, i) => (
                         <motion.div key={i} initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
@@ -1747,7 +1835,7 @@ export default function Home() {
                 {activeCase === 1 && (
                   <div className="mb-5">
                     <p className="text-neutral-400 text-xs tracking-[0.1em] leading-relaxed mb-4">
-                      Descifra las cuatro palabras para revelar el código. Cada palabra resuelta entrega un fragmento.
+                      Descifra las seis palabras para revelar el código. Cada palabra resuelta entrega un fragmento.
                     </p>
                     <div className="flex gap-3 justify-center mb-3">
                       {case2Words.map((w, i) => (
@@ -1759,7 +1847,7 @@ export default function Home() {
                       ))}
                     </div>
                     <p className="text-center text-neutral-600 text-xs tracking-widest">
-                      {wordleSolvedCount} DE 4 PALABRAS DESCIFRADAS
+                      {wordleSolvedCount} DE 6 PALABRAS DESCIFRADAS
                     </p>
                   </div>
                 )}
@@ -1768,7 +1856,7 @@ export default function Home() {
                 {activeCase === 2 && (
                   <div className="mb-5">
                     <p className="text-neutral-400 text-xs tracking-[0.1em] leading-relaxed mb-4">
-                      Completa el rosco para revelar la frase. Cada error oculta una letra del mensaje.
+                      Completa el pasapalabras para revelar la frase. Cada error oculta una letra del mensaje.
                     </p>
                     {pasapalabraState.finished && (
                       <div className="bg-neutral-900 border border-neutral-700 p-4 mb-4">
