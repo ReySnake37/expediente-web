@@ -8,48 +8,48 @@ import { Lock, FileText, Shield, ArrowLeft, ImageIcon, CheckCircle2 } from "luci
 // Types
 // ─────────────────────────────────────────────────────────────────
 
-type LoginView  = "login" | "register" | "forgot";
+type LoginView = "login" | "register" | "forgot";
 type CodeStatus = "idle" | "error" | "success";
 
 type WordleState = {
-  guesses:      string[];
+  guesses: string[];
   currentInput: string;
-  won:          boolean;
-  lost:         boolean;
+  won: boolean;
+  lost: boolean;
 };
 
 type LetterStatus = "pending" | "correct" | "incorrect";
 
 type Day3RoundData = {
   images: [string, string, string, string];
-  word:   string;
+  word: string;
 };
 
 type Day3ChatMsg = {
-  id:      number;
-  user:    string;
-  text:    string;
+  id: number;
+  user: string;
+  text: string;
   correct: boolean;
 };
 
 type Day3State = {
-  currentRound:  number;
+  currentRound: number;
   streamerScore: number;
-  chatScore:     number;
-  roundActive:   boolean;
-  roundWinner:   "streamer" | "chat" | null;
-  gameFinished:  boolean;
+  chatScore: number;
+  roundActive: boolean;
+  roundWinner: "streamer" | "chat" | null;
+  gameFinished: boolean;
 };
 
 type PasapalabraState = {
   letterStates: LetterStatus[];
-  currentIdx:   number;
+  currentIdx: number;
   currentInput: string;
-  finished:     boolean;
+  finished: boolean;
 };
 
-type BoomPhase    = "waiting" | "playing" | "roundOver" | "finished";
-type BoomPlayer   = { name: string; eliminated: boolean; score: number };
+type BoomPhase = "waiting" | "playing" | "roundOver" | "finished";
+type BoomPlayer = { name: string; eliminated: boolean; score: number };
 type BoomQuestion = { text: string; answer: string };
 
 // ─────────────────────────────────────────────────────────────────
@@ -59,22 +59,22 @@ type BoomQuestion = { text: string; answer: string };
 const MAX_WORDLE_GUESSES = 5;
 
 const cases = [
-  { id: 1, title: "01: El Comienzo",  code: "INICIO"                    },
-  { id: 2, title: "02: Sombras",      code: "SER BUENOS Y SI SON MALOS VIENEN AL CHAT O AL DISCORD Y ME LO CUENTAN" },
-  { id: 3, title: "03: Metadatos",    code: "VOID"                    },
-  { id: 4, title: "04: La Trampa",    code: "ECHO"                    },
-  { id: 5, title: "05: El Testigo",   code: "KILO"                    },
-  { id: 6, title: "06: La Verdad",    code: "LIMA"                    },
-  { id: 7, title: "07: El Veredicto", code: "FINIS"                   },
+  { id: 1, title: "01: El Comienzo", code: "INICIO" },
+  { id: 2, title: "02: Vida", code: "SER BUENOS Y SI SON MALOS VIENEN AL CHAT O AL DISCORD Y ME LO CUENTAN" },
+  { id: 3, title: "03: Detalle", code: "RASTRO" },
+  { id: 4, title: "04: La Trampa", code: "BIENVENIDOS A ESTA SANTA CASA" },
+  { id: 5, title: "05: Los Imitadores", code: "ORIGINAL" },
+  { id: 6, title: "06: La Verdad", code: "LIMA" },
+  { id: 7, title: "07: El Veredicto", code: "FINIS" },
 ];
 
 const case2Words = [
-  { label: "EVIDENCIA 1", word: "ACEITUNAS",   fragment: "I", rotate: "-rotate-2",  clue: "Hemos encontrado un alimento que el sospechoso ama comer"   },
-  { label: "EVIDENCIA 2", word: "VENTILADOR", fragment: "N", rotate: "rotate-1",   clue: "El sospechoso olvida sus rutinas y antes de su aparición en público debería tenerlo encendido" },
-  { label: "EVIDENCIA 3", word: "CAMPANADAS",   fragment: "I", rotate: "rotate-2",   clue: "El sospechoso se reune con su comunidad siempre en esta fecha para celebrar"   },
-  { label: "EVIDENCIA 4", word: "MARIACHIS",  fragment: "C", rotate: "-rotate-1",  clue: "En una ocasión lo visitaron en su casa"  },
-  { label: "EVIDENCIA 5", word: "AURONPLAY",   fragment: "I", rotate: "rotate-1.5", clue: "En reiteradas ocasiones se ha visto al sospechoso compartiendo con este personaje"   },
-  { label: "EVIDENCIA 6", word: "TURRENTS",   fragment: "O", rotate: "-rotate-1",  clue: "Es una de las maneras de identificar al sospechoso"   },
+  { label: "EVIDENCIA 1", word: "ACEITUNAS", fragment: "I", rotate: "-rotate-2", clue: "Hemos encontrado un alimento que el sospechoso ama comer" },
+  { label: "EVIDENCIA 2", word: "VENTILADOR", fragment: "N", rotate: "rotate-1", clue: "El sospechoso olvida sus rutinas y antes de su aparición en público debería tenerlo encendido" },
+  { label: "EVIDENCIA 3", word: "CAMPANADAS", fragment: "I", rotate: "rotate-2", clue: "El sospechoso se reune con su comunidad siempre en esta fecha para celebrar" },
+  { label: "EVIDENCIA 4", word: "MARIACHIS", fragment: "C", rotate: "-rotate-1", clue: "En una ocasión lo visitaron en su casa" },
+  { label: "EVIDENCIA 5", word: "AURONPLAY", fragment: "I", rotate: "rotate-1.5", clue: "En reiteradas ocasiones se ha visto al sospechoso compartiendo con este personaje" },
+  { label: "EVIDENCIA 6", word: "TURRENTS", fragment: "O", rotate: "-rotate-1", clue: "Es una de las maneras de identificar al sospechoso" },
 ];
 
 const PASAPALABRA_SENTENCE = "SER BUENOS Y SI SON MALOS VIENEN AL CHAT O AL DISCORD Y ME LO CUENTAN";
@@ -110,38 +110,46 @@ const pasapalabraClues = [
 ];
 
 const evidencePapers = [
-  { id: 1, title: "EVIDENCIA 1", rotate: "-rotate-2",
+  {
+    id: 1, title: "EVIDENCIA 1", rotate: "-rotate-2",
     text: "Fotografía tomada en la escena. Los detalles capturados pueden ser cruciales para resolver el caso.",
-    image: "evidencia1.jpg" },
-  { id: 2, title: "EVIDENCIA 2", rotate: "rotate-1",
+    image: "evidencia1.jpg"
+  },
+  {
+    id: 2, title: "EVIDENCIA 2", rotate: "rotate-1",
     text: "Documento hallado entre los archivos. Contiene información relevante aún pendiente de descifrar.",
-    image: "evidencia2.jpg" },
-  { id: 3, title: "EVIDENCIA 3", rotate: "rotate-2",
+    image: "evidencia2.jpg"
+  },
+  {
+    id: 3, title: "EVIDENCIA 3", rotate: "rotate-2",
     text: "Registro visual del incidente. Se recomienda analizar con detenimiento cada elemento capturado.",
-    image: "evidencia3.jpg" },
-  { id: 4, title: "EVIDENCIA 4", rotate: "-rotate-1",
+    image: "evidencia3.jpg"
+  },
+  {
+    id: 4, title: "EVIDENCIA 4", rotate: "-rotate-1",
     text: "Material recopilado por el equipo de campo. Pendiente de verificación y cotejo con otros indicios.",
-    image: "evidencia4.jpg" },
+    image: "evidencia4.jpg"
+  },
 ];
 
 const TWITCH_CHANNEL = "polispol1";
 
 const day3Rounds: Day3RoundData[] = [
-  { images: ["day3/r01_1.jpg","day3/r01_2.jpg","day3/r01_3.jpg","day3/r01_4.jpg"], word: "personaje"  },
-  { images: ["day3/r02_1.jpg","day3/r02_2.jpg","day3/r02_3.jpg","day3/r02_4.jpg"], word: "texto"  },
-  { images: ["day3/r03_1.jpg","day3/r03_2.jpg","day3/r03_3.jpg","day3/r03_4.jpg"], word: "polispWot"  },
-  { images: ["day3/r04_1.jpg","day3/r04_2.jpg","day3/r04_3.jpg","day3/r04_4.jpg"], word: "parlar"  },
-  { images: ["day3/r05_1.jpg","day3/r05_2.jpg","day3/r05_3.jpg","day3/r05_4.jpg"], word: "color"  },
-  { images: ["day3/r06_1.jpg","day3/r06_2.jpg","day3/r06_3.jpg","day3/r06_4.jpg"], word: "rumba"  },
-  { images: ["day3/r07_1.jpg","day3/r07_2.jpg","day3/r07_3.jpg","day3/r07_4.jpg"], word: "rio"  },
-  { images: ["day3/r08_1.jpg","day3/r08_2.jpg","day3/r08_3.jpg","day3/r08_4.jpg"], word: "texto"  },
-  { images: ["day3/r09_1.jpg","day3/r09_2.jpg","day3/r09_3.jpg","day3/r09_4.jpg"], word: "caso"  },
-  { images: ["day3/r10_1.jpg","day3/r10_2.jpg","day3/r10_3.jpg","day3/r10_4.jpg"], word: "cosa" },
+  { images: ["day3/r01_1.jpg", "day3/r01_2.jpg", "day3/r01_3.jpg", "day3/r01_4.jpg"], word: "Polispol" },
+  { images: ["day3/r02_1.jpg", "day3/r02_2.jpg", "day3/r02_3.jpg", "day3/r02_4.jpg"], word: "Peluca" },
+  { images: ["day3/r03_1.jpg", "day3/r03_2.jpg", "day3/r03_3.jpg", "day3/r03_4.jpg"], word: "Puerta a puerta" },
+  { images: ["day3/r04_1.jpg", "day3/r04_2.jpg", "day3/r04_3.jpg", "day3/r04_4.jpg"], word: "Paco" },
+  { images: ["day3/r05_1.jpg", "day3/r05_2.jpg", "day3/r05_3.jpg", "day3/r05_4.jpg"], word: "Padre" },
+  { images: ["day3/r06_1.jpg", "day3/r06_2.jpg", "day3/r06_3.jpg", "day3/r06_4.jpg"], word: "Crepusculon" },
+  { images: ["day3/r07_1.jpg", "day3/r07_2.jpg", "day3/r07_3.jpg", "day3/r07_4.jpg"], word: "Carton Pol" },
+  { images: ["day3/r08_1.jpg", "day3/r08_2.jpg", "day3/r08_3.jpg", "day3/r08_4.jpg"], word: "Rodando" },
+  { images: ["day3/r09_1.jpg", "day3/r09_2.jpg", "day3/r09_3.jpg", "day3/r09_4.jpg"], word: "Publicidad" },
+  { images: ["day3/r10_1.jpg", "day3/r10_2.jpg", "day3/r10_3.jpg", "day3/r10_4.jpg"], word: "Stream" },
 ];
 
-const MAX_BOOM_PLAYERS   = 3;
-const TOTAL_ROUNDS       = 3;
-const BOOM_CIRCLE_SIZE   = 340;
+const MAX_BOOM_PLAYERS = 3;
+const TOTAL_ROUNDS = 3;
+const BOOM_CIRCLE_SIZE = 340;
 const BOOM_CIRCLE_CENTER = BOOM_CIRCLE_SIZE / 2;
 const BOOM_CIRCLE_RADIUS = 140;
 
@@ -194,7 +202,7 @@ const BOOM_QUESTIONS: BoomQuestion[] = [
   { text: "¿Pelicula en la que Pol participo como Director de Fotografía rodada en Madrid?", answer: "VENUS" },
   { text: "¿Como se le llama a la comunidad que creo Polispol?", answer: "POLICARPIERS" },
   { text: "¿Pol conocio a Jon M. Chu, director de?", answer: "WICKED" },
-  { text: "¿Que personaje de Toy Story fue secustrado por Pol?", answer: "WOODY" },
+  { text: "¿Que personaje de Toy Story fue secuestrado por Pol?", answer: "WOODY" },
   { text: "¿Moderador que se caso con una seguidora del canal?", answer: "DOOPA" },
   { text: "¿Miembro de la comunidad que destaca por tener GIF de cualquier tema del canal?", answer: "MONIRAPIDA" },
   { text: "¿Moderador que le gana a Pol en Tetris?", answer: "DAHER" },
@@ -216,9 +224,9 @@ const BOOM_QUESTIONS: BoomQuestion[] = [
 ];
 
 const slideVariants = {
-  enter:  { opacity: 0, y: 12 },
-  center: { opacity: 1, y: 0  },
-  exit:   { opacity: 0, y: -8 },
+  enter: { opacity: 0, y: 12 },
+  center: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -8 },
 };
 
 // ─────────────────────────────────────────────────────────────────
@@ -279,24 +287,24 @@ function getLetterStates(guess: string, target: string): ("correct" | "present" 
 // PasapalabraGame component
 // ─────────────────────────────────────────────────────────────────
 
-const CIRCLE_SIZE   = 280;
+const CIRCLE_SIZE = 280;
 const CIRCLE_CENTER = CIRCLE_SIZE / 2;
 const CIRCLE_RADIUS = 112;
-const LETTER_BOX    = 26;
+const LETTER_BOX = 26;
 
 function PasapalabraGame({
   state, onInput, onAnswer, onPass, onFinish,
 }: {
-  state:    PasapalabraState;
-  onInput:  (v: string) => void;
+  state: PasapalabraState;
+  onInput: (v: string) => void;
   onAnswer: () => void;
-  onPass:   () => void;
+  onPass: () => void;
   onFinish: () => void;
 }) {
-  const currentClue    = !state.finished && state.currentIdx >= 0 ? pasapalabraClues[state.currentIdx] : null;
-  const correctCount   = state.letterStates.filter(s => s === "correct").length;
+  const currentClue = !state.finished && state.currentIdx >= 0 ? pasapalabraClues[state.currentIdx] : null;
+  const correctCount = state.letterStates.filter(s => s === "correct").length;
   const incorrectCount = state.letterStates.filter(s => s === "incorrect").length;
-  const pendingCount   = state.letterStates.filter(s => s === "pending").length;
+  const pendingCount = state.letterStates.filter(s => s === "pending").length;
 
   return (
     <div className="bg-[#f4f1ea] border border-neutral-300 shadow-lg p-4 flex flex-col gap-4">
@@ -314,10 +322,10 @@ function PasapalabraGame({
       <div className="flex justify-center">
         <div className="relative" style={{ width: CIRCLE_SIZE, height: CIRCLE_SIZE }}>
           {pasapalabraClues.map((clue, i) => {
-            const angle     = -Math.PI / 2 + (i / pasapalabraClues.length) * 2 * Math.PI;
-            const x         = CIRCLE_CENTER + CIRCLE_RADIUS * Math.cos(angle) - LETTER_BOX / 2;
-            const y         = CIRCLE_CENTER + CIRCLE_RADIUS * Math.sin(angle) - LETTER_BOX / 2;
-            const status    = state.letterStates[i];
+            const angle = -Math.PI / 2 + (i / pasapalabraClues.length) * 2 * Math.PI;
+            const x = CIRCLE_CENTER + CIRCLE_RADIUS * Math.cos(angle) - LETTER_BOX / 2;
+            const y = CIRCLE_CENTER + CIRCLE_RADIUS * Math.sin(angle) - LETTER_BOX / 2;
+            const status = state.letterStates[i];
             const isCurrent = i === state.currentIdx && !state.finished;
 
             return (
@@ -413,24 +421,24 @@ function PasapalabraGame({
 function Day3Game({
   state, onStartRound, onStreamerGuess, onChatWin, onNextRound,
 }: {
-  state:          Day3State;
-  onStartRound:   () => void;
+  state: Day3State;
+  onStartRound: () => void;
   onStreamerGuess: (text: string) => void;
-  onChatWin:      (user: string) => void;
-  onNextRound:    () => void;
+  onChatWin: (user: string) => void;
+  onNextRound: () => void;
 }) {
-  const [input,     setInput]     = useState("");
-  const [chatMsgs,  setChatMsgs]  = useState<Day3ChatMsg[]>([]);
+  const [input, setInput] = useState("");
+  const [chatMsgs, setChatMsgs] = useState<Day3ChatMsg[]>([]);
   const [connected, setConnected] = useState(false);
-  const chatEndRef   = useRef<HTMLDivElement>(null);
-  const wordRef      = useRef("");
-  const activeRef    = useRef(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const wordRef = useRef("");
+  const activeRef = useRef(false);
   const onChatWinRef = useRef(onChatWin);
 
   // Keep refs current without restarting the WebSocket
   const round = day3Rounds[state.currentRound];
-  wordRef.current      = state.roundActive ? (round?.word ?? "") : "";
-  activeRef.current    = state.roundActive && !state.roundWinner;
+  wordRef.current = state.roundActive ? (round?.word ?? "") : "";
+  activeRef.current = state.roundActive && !state.roundWinner;
   onChatWinRef.current = onChatWin;
 
   // Twitch IRC (anonymous read-only)
@@ -487,7 +495,7 @@ function Day3Game({
     setInput("");
   }
 
-  const isLast    = state.currentRound >= day3Rounds.length - 1;
+  const isLast = state.currentRound >= day3Rounds.length - 1;
   const hasWinner = !!state.roundWinner;
 
   return (
@@ -518,7 +526,7 @@ function Day3Game({
 
         {/* Images */}
         <div className="grid grid-cols-2 gap-2 flex-1">
-          {(round?.images ?? ["","","",""]).map((img, i) => (
+          {(round?.images ?? ["", "", "", ""]).map((img, i) => (
             <div
               key={i}
               className="aspect-square bg-neutral-800 border border-neutral-700 flex items-center justify-center overflow-hidden"
@@ -549,9 +557,8 @@ function Day3Game({
               chatMsgs.map(msg => (
                 <div
                   key={msg.id}
-                  className={`text-[11px] leading-tight break-words ${
-                    msg.correct ? "text-green-400 font-bold" : "text-neutral-400"
-                  }`}
+                  className={`text-[11px] leading-tight break-words ${msg.correct ? "text-green-400 font-bold" : "text-neutral-400"
+                    }`}
                 >
                   <span className="text-purple-400 font-bold">{msg.user}</span>
                   {": "}{msg.text}
@@ -597,16 +604,14 @@ function Day3Game({
       {hasWinner && (
         <motion.div
           initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-          className={`border p-4 flex items-center justify-between gap-4 ${
-            state.roundWinner === "streamer"
+          className={`border p-4 flex items-center justify-between gap-4 ${state.roundWinner === "streamer"
               ? "border-yellow-600 bg-yellow-950/40"
               : "border-purple-600 bg-purple-950/40"
-          }`}
+            }`}
         >
           <div>
-            <p className={`text-sm font-bold tracking-widest ${
-              state.roundWinner === "streamer" ? "text-yellow-400" : "text-purple-400"
-            }`}>
+            <p className={`text-sm font-bold tracking-widest ${state.roundWinner === "streamer" ? "text-yellow-400" : "text-purple-400"
+              }`}>
               {state.roundWinner === "streamer" ? "¡POLISPOL GANA LA RONDA!" : "¡EL CHAT GANA LA RONDA!"}
             </p>
             <p className="text-neutral-400 text-xs mt-1 tracking-widest">
@@ -638,6 +643,11 @@ function Day3Game({
           <p className="text-neutral-500 text-sm tracking-widest">
             {state.streamerScore} — {state.chatScore}
           </p>
+          {state.streamerScore > state.chatScore && (
+            <p className="text-yellow-400/70 text-xs tracking-[0.3em] mt-3">
+              PALABRA CLAVE: <span className="text-yellow-400 font-bold">RASTRO</span>
+            </p>
+          )}
         </motion.div>
       )}
     </div>
@@ -649,35 +659,35 @@ function Day3Game({
 // ─────────────────────────────────────────────────────────────────
 
 function BoomGame({ onFinish, username }: { onFinish: () => void; username: string }) {
-  const [phase,         setPhase]         = useState<BoomPhase>("waiting");
-  const [roundNumber,   setRoundNumber]   = useState(1);
-  const [players,       setPlayers]       = useState<BoomPlayer[]>([]);
-  const [currentIdx,    setCurrentIdx]    = useState(0);
-  const [question,      setQuestion]      = useState<BoomQuestion | null>(null);
-  const [usedQIdxs,     setUsedQIdxs]     = useState<number[]>([]);
-  const [timeLeft,      setTimeLeft]      = useState(5);
-  const [roundWinner,   setRoundWinner]   = useState<string | null>(null);
-  const [chatMsgs,      setChatMsgs]      = useState<{ id: number; user: string; text: string; highlight: boolean }[]>([]);
-  const [connected,     setConnected]     = useState(false);
+  const [phase, setPhase] = useState<BoomPhase>("waiting");
+  const [roundNumber, setRoundNumber] = useState(1);
+  const [players, setPlayers] = useState<BoomPlayer[]>([]);
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [question, setQuestion] = useState<BoomQuestion | null>(null);
+  const [usedQIdxs, setUsedQIdxs] = useState<number[]>([]);
+  const [timeLeft, setTimeLeft] = useState(7);
+  const [roundWinner, setRoundWinner] = useState<string | null>(null);
+  const [chatMsgs, setChatMsgs] = useState<{ id: number; user: string; text: string; highlight: boolean }[]>([]);
+  const [connected, setConnected] = useState(false);
   const [streamerInput, setStreamerInput] = useState("");
 
-  const chatEndRef    = useRef<HTMLDivElement>(null);
-  const phaseRef      = useRef<BoomPhase>("waiting");
-  const playersRef    = useRef<BoomPlayer[]>([]);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const phaseRef = useRef<BoomPhase>("waiting");
+  const playersRef = useRef<BoomPlayer[]>([]);
   const currentIdxRef = useRef(0);
-  const questionRef   = useRef<BoomQuestion | null>(null);
-  const usedQIdxsRef  = useRef<number[]>([]);
-  const onFinishRef   = useRef(onFinish);
+  const questionRef = useRef<BoomQuestion | null>(null);
+  const usedQIdxsRef = useRef<number[]>([]);
+  const onFinishRef = useRef(onFinish);
 
-  phaseRef.current      = phase;
-  playersRef.current    = players;
+  phaseRef.current = phase;
+  playersRef.current = players;
   currentIdxRef.current = currentIdx;
-  questionRef.current   = question;
-  usedQIdxsRef.current  = usedQIdxs;
-  onFinishRef.current   = onFinish;
+  questionRef.current = question;
+  usedQIdxsRef.current = usedQIdxs;
+  onFinishRef.current = onFinish;
 
   function timerFor(idx: number, arr: BoomPlayer[]): number {
-    return arr[idx]?.name.toLowerCase() === username.toLowerCase() ? 4 : 5;
+    return arr[idx]?.name.toLowerCase() === username.toLowerCase() ? 7 : 8;
   }
 
   function pickQuestion(used: number[]): { q: BoomQuestion; qIdx: number } {
@@ -746,7 +756,7 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
     e.preventDefault();
     if (phase !== "playing" || !isStreamerTurn() || !questionRef.current) return;
     const normalized = normalizeAnswer(streamerInput);
-    const expected   = normalizeAnswer(questionRef.current.answer);
+    const expected = normalizeAnswer(questionRef.current.answer);
     setStreamerInput("");
     if (!normalized || normalized !== expected) return;
     const updated = playersRef.current.map((p, i) =>
@@ -781,7 +791,7 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMsgs]);
 
-  // Twitch IRC — registration (!imitator) + answer detection
+  // Twitch IRC — registration (!imitador) + answer detection
   useEffect(() => {
     const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
     ws.onopen = () => {
@@ -793,7 +803,7 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
     };
     ws.onclose = () => setConnected(false);
     ws.onmessage = (evt) => {
-      const raw  = evt.data as string;
+      const raw = evt.data as string;
       if (raw.startsWith("PING")) { ws.send("PONG :tmi.twitch.tv"); return; }
       if (!raw.includes("PRIVMSG")) return;
       const text = raw.match(/PRIVMSG #\w+ :(.+)/)?.[1]?.trim() ?? "";
@@ -804,7 +814,7 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
       ).toLowerCase();
 
       if (phaseRef.current === "waiting") {
-        if (text.toLowerCase() === "!imitator") {
+        if (text.toLowerCase() === "!imitador") {
           setPlayers(prev => {
             if (prev.length >= MAX_BOOM_PLAYERS) return prev;
             if (prev.some(p => p.name.toLowerCase() === user)) return prev;
@@ -815,14 +825,14 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
       }
 
       if (phaseRef.current === "playing") {
-        const cur     = playersRef.current[currentIdxRef.current];
+        const cur = playersRef.current[currentIdxRef.current];
         const baseMsg = { id: Date.now() + Math.random(), user, text, highlight: false };
         if (!cur || cur.name.toLowerCase() !== user || !questionRef.current) {
           setChatMsgs(prev => [...prev.slice(-49), baseMsg]);
           return;
         }
         const normalized = normalizeAnswer(text);
-        const expected   = normalizeAnswer(questionRef.current.answer);
+        const expected = normalizeAnswer(questionRef.current.answer);
         if (normalized !== expected) {
           setChatMsgs(prev => [...prev.slice(-49), baseMsg]);
           return;
@@ -861,7 +871,7 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
           <div className="bg-neutral-800/40 border border-neutral-700 p-4">
             <p className="text-neutral-400 text-xs tracking-widest mb-3">
               Los primeros <span className="text-amber-400 font-bold">{MAX_BOOM_PLAYERS}</span> en escribir{" "}
-              <span className="text-amber-400 font-bold">!imitator</span> en el chat participarán en la ronda {roundNumber}.
+              <span className="text-amber-400 font-bold">!imitador</span> en el chat participarán en la ronda {roundNumber}.
             </p>
             <div className="flex flex-wrap gap-2 min-h-[32px]">
               {players.map((p, i) => (
@@ -924,7 +934,10 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
           className="border border-neutral-600 bg-neutral-800/40 p-6 text-center"
         >
           <p className="text-[10px] tracking-widest text-neutral-500 mb-2">PARTIDA COMPLETADA — {TOTAL_ROUNDS} RONDAS</p>
-          <p className="text-neutral-400 text-sm">Ingresa el código para continuar.</p>
+          <p className="text-neutral-400 text-sm mb-3">Ingresa el código para continuar.</p>
+          <p className="text-amber-500/70 text-xs tracking-[0.3em]">
+            PALABRA CLAVE: <span className="text-amber-400 font-bold">ORIGINAL</span>
+          </p>
         </motion.div>
       )}
 
@@ -938,9 +951,9 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
             style={{ width: BOOM_CIRCLE_SIZE, height: BOOM_CIRCLE_SIZE }}
           >
             {players.map((p, i) => {
-              const angle  = -Math.PI / 2 + (i / players.length) * 2 * Math.PI;
-              const x      = BOOM_CIRCLE_CENTER + BOOM_CIRCLE_RADIUS * Math.cos(angle);
-              const y      = BOOM_CIRCLE_CENTER + BOOM_CIRCLE_RADIUS * Math.sin(angle);
+              const angle = -Math.PI / 2 + (i / players.length) * 2 * Math.PI;
+              const x = BOOM_CIRCLE_CENTER + BOOM_CIRCLE_RADIUS * Math.cos(angle);
+              const y = BOOM_CIRCLE_CENTER + BOOM_CIRCLE_RADIUS * Math.sin(angle);
               const isCurr = i === currentIdx;
               return (
                 <div
@@ -985,9 +998,8 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
 
             {/* Timer */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <span className={`text-5xl font-bold tabular-nums ${
-                timeLeft <= 2 ? "text-red-400" : timeLeft <= 3 ? "text-yellow-400" : "text-green-400"
-              }`}>
+              <span className={`text-5xl font-bold tabular-nums ${timeLeft <= 2 ? "text-red-400" : timeLeft <= 3 ? "text-yellow-400" : "text-green-400"
+                }`}>
                 {timeLeft}
               </span>
             </div>
@@ -1044,9 +1056,8 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
                 {chatMsgs.map(msg => (
                   <div
                     key={msg.id}
-                    className={`text-[11px] leading-tight break-words ${
-                      msg.highlight ? "text-green-400 font-bold" : "text-neutral-400"
-                    }`}
+                    className={`text-[11px] leading-tight break-words ${msg.highlight ? "text-green-400 font-bold" : "text-neutral-400"
+                      }`}
                   >
                     <span className="text-purple-400 font-bold">{msg.user}</span>: {msg.text}
                   </div>
@@ -1071,11 +1082,11 @@ function WordlePaper({
 }: {
   label: string; word: string; fragment: string; rotate: string; clue?: string;
   state: WordleState;
-  onInput:  (v: string) => void;
+  onInput: (v: string) => void;
   onSubmit: () => void;
 }) {
   const CELL = 28;
-  const GAP  = 2;
+  const GAP = 2;
 
   return (
     <div className={`bg-[#f4f1ea] border border-neutral-300 shadow-lg p-4 flex flex-col gap-3 ${rotate}`}>
@@ -1101,8 +1112,8 @@ function WordlePaper({
       <div className="flex flex-col" style={{ gap: GAP }}>
         {Array.from({ length: MAX_WORDLE_GUESSES }).map((_, rowIdx) => {
           const submitted = state.guesses[rowIdx];
-          const isActive  = rowIdx === state.guesses.length && !state.won && !state.lost;
-          const letters   = submitted
+          const isActive = rowIdx === state.guesses.length && !state.won && !state.lost;
+          const letters = submitted
             ? submitted.split("")
             : isActive
               ? Array.from({ length: word.length }, (_, i) => state.currentInput[i] ?? "")
@@ -1113,17 +1124,17 @@ function WordlePaper({
             <div key={rowIdx} className="flex" style={{ gap: GAP }}>
               {Array.from({ length: word.length }).map((_, colIdx) => {
                 const letter = letters[colIdx] ?? "";
-                const st     = states?.[colIdx];
+                const st = states?.[colIdx];
                 return (
                   <div
                     key={colIdx}
                     style={{ width: CELL, height: CELL }}
                     className={`flex items-center justify-center text-[10px] font-bold border select-none
                       ${st === "correct" ? "bg-green-600  border-green-600  text-white"
-                      : st === "present" ? "bg-yellow-500 border-yellow-500 text-white"
-                      : st === "absent"  ? "bg-neutral-500 border-neutral-500 text-white"
-                      : letter           ? "border-neutral-500 text-neutral-800"
-                      :                    "border-neutral-300"}`}
+                        : st === "present" ? "bg-yellow-500 border-yellow-500 text-white"
+                          : st === "absent" ? "bg-neutral-500 border-neutral-500 text-white"
+                            : letter ? "border-neutral-500 text-neutral-800"
+                              : "border-neutral-300"}`}
                   >
                     {letter}
                   </div>
@@ -1174,28 +1185,28 @@ function WordlePaper({
 
 export default function Home() {
   // ── Auth ──
-  const [isLoggedIn,  setIsLoggedIn]  = useState(false);
-  const [loginView,   setLoginView]   = useState<LoginView>("login");
-  const [username,    setUsername]    = useState("");
-  const [password,    setPassword]    = useState("");
-  const [regEmail,    setRegEmail]    = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loginView, setLoginView] = useState<LoginView>("login");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [regEmail, setRegEmail] = useState("");
   const [regUsername, setRegUsername] = useState("");
   const [regPassword, setRegPassword] = useState("");
   const [forgotEmail, setForgotEmail] = useState("");
-  const [forgotSent,  setForgotSent]  = useState(false);
-  const [authError,   setAuthError]   = useState("");
+  const [forgotSent, setForgotSent] = useState(false);
+  const [authError, setAuthError] = useState("");
 
   // ── Intro ──
   const [introSeen, setIntroSeen] = useState(false);
 
   // ── Folder ──
-  const [isOpen,       setIsOpen]       = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [unlockedUpTo, setUnlockedUpTo] = useState(1);
 
   // ── Evidence / code ──
-  const [activeCase,  setActiveCase]  = useState<number | null>(null);
-  const [codeInput,   setCodeInput]   = useState("");
-  const [codeStatus,  setCodeStatus]  = useState<CodeStatus>("idle");
+  const [activeCase, setActiveCase] = useState<number | null>(null);
+  const [codeInput, setCodeInput] = useState("");
+  const [codeStatus, setCodeStatus] = useState<CodeStatus>("idle");
 
   // ── Wordle state for case 2 ──
   const [wordleStates, setWordleStates] = useState<WordleState[]>(() =>
@@ -1207,33 +1218,33 @@ export default function Home() {
 
   // ── Day3 game state for case 3 ──
   const [day3State, setDay3State] = useState<Day3State>({
-    currentRound:  0,
+    currentRound: 0,
     streamerScore: 0,
-    chatScore:     0,
-    roundActive:   false,
-    roundWinner:   null,
-    gameFinished:  false,
+    chatScore: 0,
+    roundActive: false,
+    roundWinner: null,
+    gameFinished: false,
   });
 
   // ── Pasapalabra state for case 3 ──
   const [pasapalabraState, setPasapalabraState] = useState<PasapalabraState>(() => ({
     letterStates: pasapalabraClues.map(() => "pending" as LetterStatus),
-    currentIdx:   0,
+    currentIdx: 0,
     currentInput: "",
-    finished:     false,
+    finished: false,
   }));
 
   // ── Derived ──
-  const allSolved    = unlockedUpTo > cases.length;
+  const allSolved = unlockedUpTo > cases.length;
   const orderedCases = [
     ...cases.filter(c => c.id === unlockedUpTo),
     ...cases.filter(c => c.id < unlockedUpTo).reverse(),
     ...cases.filter(c => c.id > unlockedUpTo),
   ];
 
-  const wordleFragments   = case2Words.map((w, i) => (wordleStates[i].won ? w.fragment : null));
+  const wordleFragments = case2Words.map((w, i) => (wordleStates[i].won ? w.fragment : null));
   const wordleSolvedCount = wordleFragments.filter(Boolean).length;
-  const wordleAllSolved   = wordleSolvedCount === case2Words.length;
+  const wordleAllSolved = wordleSolvedCount === case2Words.length;
 
   const pasapalabraIncorrectCount = pasapalabraState.letterStates.filter(s => s === "incorrect").length;
 
@@ -1286,12 +1297,12 @@ export default function Home() {
   }
 
   function handleWordleSubmit(index: number) {
-    const ws     = wordleStates[index];
+    const ws = wordleStates[index];
     const target = case2Words[index].word.toUpperCase();
-    const guess  = ws.currentInput.toUpperCase();
+    const guess = ws.currentInput.toUpperCase();
     if (guess.length !== target.length || ws.won || ws.lost) return;
     const newGuesses = [...ws.guesses, guess];
-    const won  = guess === target;
+    const won = guess === target;
     const lost = !won && newGuesses.length >= MAX_WORDLE_GUESSES;
     setWordleStates(prev => prev.map((s, i) =>
       i === index ? { ...s, guesses: newGuesses, currentInput: "", won, lost } : s
@@ -1306,11 +1317,11 @@ export default function Home() {
   function handlePasapalabraAnswer() {
     const ps = pasapalabraState;
     if (ps.finished || !ps.currentInput.trim()) return;
-    const clue    = pasapalabraClues[ps.currentIdx];
+    const clue = pasapalabraClues[ps.currentIdx];
     const correct = normalizeAnswer(ps.currentInput) === normalizeAnswer(clue.answer);
     const newStates = [...ps.letterStates] as LetterStatus[];
     newStates[ps.currentIdx] = correct ? "correct" : "incorrect";
-    const nextIdx  = getNextPendingIdx(newStates, ps.currentIdx);
+    const nextIdx = getNextPendingIdx(newStates, ps.currentIdx);
     const finished = nextIdx === -1;
     setPasapalabraState({ letterStates: newStates, currentIdx: finished ? ps.currentIdx : nextIdx, currentInput: "", finished });
   }
@@ -1349,8 +1360,8 @@ export default function Home() {
     if (normalizeAnswer(text) === normalizeAnswer(round.word)) {
       setDay3State(prev => ({
         ...prev,
-        roundActive:   false,
-        roundWinner:   "streamer",
+        roundActive: false,
+        roundWinner: "streamer",
         streamerScore: prev.streamerScore + 1,
       }));
     }
@@ -1424,9 +1435,8 @@ export default function Home() {
                   >
                     {(["login", "register"] as const).map(tab => (
                       <button key={tab} onClick={() => switchView(tab)}
-                        className={`flex-1 py-2 text-xs tracking-[0.2em] transition-colors border-b-2 -mb-px ${
-                          loginView === tab ? "text-neutral-200 border-neutral-400" : "text-neutral-600 border-transparent hover:text-neutral-400"
-                        }`}>
+                        className={`flex-1 py-2 text-xs tracking-[0.2em] transition-colors border-b-2 -mb-px ${loginView === tab ? "text-neutral-200 border-neutral-400" : "text-neutral-600 border-transparent hover:text-neutral-400"
+                          }`}>
                         {tab === "login" ? "ACCESO" : "REGISTRO"}
                       </button>
                     ))}
@@ -1558,20 +1568,20 @@ export default function Home() {
 
                 {/* Header */}
                 <div className="border-b-2 border-neutral-800 pb-4 mb-6">
-                  <p className="text-neutral-500 text-[10px] tracking-[0.3em] mb-1">EXPEDIENTE POLISPOL — BRIEFING INICIAL</p>
+                  <p className="text-neutral-500 text-[10px] tracking-[0.3em] mb-1">EXPEDIENTE POLISPOL</p>
                   <h2 className="text-2xl font-bold text-neutral-800 tracking-widest">BIENVENIDO, AGENTE <span className="text-red-800">{username.toUpperCase()}</span></h2>
                 </div>
 
                 {/* Body — placeholder text, replace with real context */}
                 <div className="space-y-4 text-sm text-neutral-700 leading-relaxed">
                   <p>
-                    [Aquí va el contexto principal del evento. Explica de qué trata el expediente, qué sucedió, y por qué el agente debe investigar.]
+                    Si ha llegado hasta este punto, significa que ha sido seleccionado para formar parte de la unidad de investigación especial de Polispol. Su misión será resolver una serie de casos que requieren habilidades analíticas, deductivas y de trabajo en equipo.
                   </p>
                   <p>
-                    [Segundo párrafo: contexto adicional, pistas sobre la narrativa, o instrucciones generales para la investigación.]
+                    Durante 7 días enfrentara diversos casos que nos ayudaran a analizar al sospechoso y su expediente, se enfrentara a una prueba por día que de completar de manera correcta le permitirá avanzar al siguiente día.
                   </p>
                   <p>
-                    [Tercer párrafo opcional: tono dramático, advertencia, o llamada a la acción antes de abrir el expediente.]
+                    Mucha suerte en el proceso.
                   </p>
                 </div>
 
@@ -1603,9 +1613,9 @@ export default function Home() {
 
                 <div className={`absolute inset-0 p-4 ${!isOpen ? "pointer-events-none" : ""}`}>
                   {orderedCases.map((c, index) => {
-                    const isActive   = c.id === unlockedUpTo && !allSolved;
-                    const isSolved   = c.id < unlockedUpTo;
-                    const isLocked   = c.id > unlockedUpTo;
+                    const isActive = c.id === unlockedUpTo && !allSolved;
+                    const isSolved = c.id < unlockedUpTo;
+                    const isLocked = c.id > unlockedUpTo;
                     const accessible = isActive && isLoggedIn;
 
                     return (
@@ -1622,9 +1632,9 @@ export default function Home() {
                           <h2 className="text-xl font-bold text-neutral-800 flex items-center gap-2">
                             <FileText className="w-5 h-5" /> Caso #{c.id}
                           </h2>
-                          {isLocked  && <Lock className="w-5 h-5 text-neutral-500" />}
-                          {isSolved  && <span className="text-blue-700  font-bold text-sm">RESUELTO</span>}
-                          {isActive  && <span className="text-green-700 font-bold text-sm">ACTIVO</span>}
+                          {isLocked && <Lock className="w-5 h-5 text-neutral-500" />}
+                          {isSolved && <span className="text-blue-700  font-bold text-sm">RESUELTO</span>}
+                          {isActive && <span className="text-green-700 font-bold text-sm">ACTIVO</span>}
                         </div>
                         <h3 className="text-lg font-bold text-neutral-700 mb-2">{c.title}</h3>
                         {(isLocked || (isActive && !isLoggedIn)) && (
@@ -1647,9 +1657,9 @@ export default function Home() {
                                   : c.id === 3
                                     ? "Ya logramos identificar algunas tendencias del sospechoso, ahora necesitamos analizar su comportamiento en situaciones bajo presión."
                                     : c.id === 4
-                                      ? "Nuestra agente MoniRapida nos ha contactado el día de hoy."
+                                      ? "Nuestra agente MoniRapida nos a contactado el día de hoy con un avance en su investigación, busca clasificar correctamente el archivo para poder continuar con el análisis del sospechoso."
                                       : c.id === 5
-                                        ? "¡Los primeros 15 del chat en escribir !play entran al juego! Di palabras con la sílaba indicada o quedarás eliminado."
+                                        ? "El día de hoy nos encontramos con un problema que frena nuestra investigación, debemos poner al sujeto a prueba para encontrar al verdadero Polispol entre algunos imitadores."
                                         : "Analiza las evidencias disponibles y descifra el código para avanzar en la investigación."}
                             </p>
                             <button
@@ -1729,13 +1739,13 @@ export default function Home() {
 
                     <div className="space-y-4 text-sm text-neutral-700 leading-relaxed mb-8">
                       <p>
-                        Nuestra Agente MoniRapida realizo un perfilamiento psicológico del sujeto basado en sus interacciones recientes. Se identificaron patrones de comportamiento que sugieren una alta capacidad de manipulación y tendencia a la impulsividad. Es crucial considerar estos factores al analizar sus posibles movimientos futuros.
+                        MoniRapida realizo una ardua investigación en el archivo del sospechoso, allí encontro situaciones que generan alerta y deben ser identificadas.
                       </p>
                       <p>
-                        [Segundo párrafo: c]
+                        Así que para poder continuar con la investigación debemos ir a su registro y terminar lo que ella inicio.
                       </p>
                       <p>
-                        [Tercer párrafo: ]
+                        Nos comenta que si logramos clasificar correctamente el archivo, recibiremos un código que nos permitirá continuar con la investigación y acercarnos a la resolución del caso.
                       </p>
                     </div>
 
@@ -1750,7 +1760,7 @@ export default function Home() {
                         rel="noopener noreferrer"
                         className="bg-neutral-800 text-[#f4f1ea] px-6 py-2.5 text-xs tracking-[0.25em] hover:bg-neutral-700 transition-colors border border-neutral-700 shrink-0"
                       >
-                        ACCEDER AL PERFIL →
+                        ACCEDER A LA INVESTIGACIÓN →
                       </a>
                     </div>
                   </div>
@@ -1770,7 +1780,7 @@ export default function Home() {
                 </motion.div>
               ) : activeCase === 2 ? (
                 <div className="flex flex-col gap-6 w-full max-w-2xl">
-                             
+
                   {/* Pasapalabra game */}
                   <motion.div
                     initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
@@ -1789,35 +1799,35 @@ export default function Home() {
                 <div className="grid grid-cols-3 gap-6 w-full max-w-2xl">
                   {activeCase === 1
                     ? case2Words.map((w, i) => (
-                        <motion.div key={i} initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-                          transition={{ duration: 0.45, delay: i * 0.08, ease: "backOut" }}>
-                          <WordlePaper
-                            label={w.label} word={w.word} fragment={w.fragment} rotate={w.rotate} clue={w.clue}
-                            state={wordleStates[i]}
-                            onInput={v => handleWordleInput(i, v)}
-                            onSubmit={() => handleWordleSubmit(i)}
-                          />
-                        </motion.div>
-                      ))
+                      <motion.div key={i} initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+                        transition={{ duration: 0.45, delay: i * 0.08, ease: "backOut" }}>
+                        <WordlePaper
+                          label={w.label} word={w.word} fragment={w.fragment} rotate={w.rotate} clue={w.clue}
+                          state={wordleStates[i]}
+                          onInput={v => handleWordleInput(i, v)}
+                          onSubmit={() => handleWordleSubmit(i)}
+                        />
+                      </motion.div>
+                    ))
                     : evidencePapers.map((paper, index) => (
-                        <motion.div key={paper.id} initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-                          transition={{ duration: 0.45, delay: index * 0.08, ease: "backOut" }}
-                          className={`bg-[#f4f1ea] border border-neutral-300 shadow-lg p-5 flex flex-col gap-3 ${paper.rotate}`}>
-                          <div className="border-b border-neutral-400 pb-2 flex items-center gap-2">
-                            <FileText className="w-4 h-4 text-neutral-600" />
-                            <span className="text-sm font-bold text-neutral-800 tracking-widest">{paper.title}</span>
+                      <motion.div key={paper.id} initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+                        transition={{ duration: 0.45, delay: index * 0.08, ease: "backOut" }}
+                        className={`bg-[#f4f1ea] border border-neutral-300 shadow-lg p-5 flex flex-col gap-3 ${paper.rotate}`}>
+                        <div className="border-b border-neutral-400 pb-2 flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-neutral-600" />
+                          <span className="text-sm font-bold text-neutral-800 tracking-widest">{paper.title}</span>
+                        </div>
+                        {paper.image ? (
+                          <img src={paper.image} alt={paper.title} className="w-full h-28 object-cover" />
+                        ) : (
+                          <div className="bg-neutral-200 border border-dashed border-neutral-400 flex flex-col items-center justify-center gap-1 h-28">
+                            <ImageIcon className="w-6 h-6 text-neutral-400" />
+                            <span className="text-neutral-400 text-xs tracking-widest">[ IMAGEN ]</span>
                           </div>
-                          {paper.image ? (
-                            <img src={paper.image} alt={paper.title} className="w-full h-28 object-cover" />
-                          ) : (
-                            <div className="bg-neutral-200 border border-dashed border-neutral-400 flex flex-col items-center justify-center gap-1 h-28">
-                              <ImageIcon className="w-6 h-6 text-neutral-400" />
-                              <span className="text-neutral-400 text-xs tracking-widest">[ IMAGEN ]</span>
-                            </div>
-                          )}
-                          <p className="text-xs text-neutral-600 leading-relaxed">{paper.text}</p>
-                        </motion.div>
-                      ))
+                        )}
+                        <p className="text-xs text-neutral-600 leading-relaxed">{paper.text}</p>
+                      </motion.div>
+                    ))
                   }
                 </div>
               )}
@@ -1914,10 +1924,10 @@ export default function Home() {
                       disabled={activeCase === 1 && !wordleAllSolved}
                       className={`flex-1 bg-neutral-900 border border-neutral-600 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-neutral-400 uppercase placeholder:text-neutral-700 placeholder:normal-case placeholder:tracking-normal disabled:opacity-30 ${activeCase === 2 ? "tracking-wide" : "tracking-[0.3em]"}`}
                       placeholder={
-                        activeCase === 1 && !wordleAllSolved ? "Descifra las 4 palabras primero"
-                        : "Ingresa el código"
+                        activeCase === 1 && !wordleAllSolved ? "Descifra las 6 palabras primero"
+                          : "Ingresa el código"
                       }
-                      maxLength={activeCase === 2 ? 80 : 20}
+                      maxLength={activeCase === 2 ? 80 : 50}
                     />
                     <button
                       type="submit"
