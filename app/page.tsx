@@ -1857,7 +1857,7 @@ export default function Home() {
                       ))}
                     </div>
                     <p className="text-center text-neutral-600 text-xs tracking-widest">
-                      {wordleSolvedCount} DE 6 PALABRAS DESCIFRADAS
+                      {wordleSolvedCount} DE 6 LETRAS DESCIFRADAS
                     </p>
                   </div>
                 )}
