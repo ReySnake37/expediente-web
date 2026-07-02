@@ -1448,7 +1448,7 @@ export default function Home() {
 
   // ── Folder ──
   const [isOpen, setIsOpen] = useState(false);
-  const [unlockedUpTo, setUnlockedUpTo] = useState(5); // TODO: reset to 1
+  const [unlockedUpTo, setUnlockedUpTo] = useState(1); // TODO: reset to 1
 
   // ── Evidence / code ──
   const [activeCase, setActiveCase] = useState<number | null>(null);
