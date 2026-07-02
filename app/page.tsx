@@ -234,6 +234,8 @@ const BOOM_QUESTIONS: BoomQuestion[] = [
   { text: "¿País de latinoamerica en el que vivio Pol?", answer: "ARGENTINA" },
   { text: "¿Director de las peliculas de Batman favoritas donde aparece el Jokker favorito de Pol?", answer: "TIM BURTON" },
   { text: "¿Pais en el que Pol encontro un accidente en GeoGuessr?", answer: "SENEGAL" },
+  { text: "¿La casa que construyo Pol en Extremo 3 esta inspirada en el artista?", answer: "BAD BUNNY" },
+  { text: "¿Cuantos años cumple el sospechoso?", answer: "50" },
 ];
 
 const slideVariants = {
@@ -870,8 +872,8 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
         <div className="flex flex-col gap-4">
           <div className="bg-neutral-800/40 border border-neutral-700 p-4">
             <p className="text-neutral-400 text-base tracking-widest mb-3">
-              Los primeros <span className="text-amber-400 font-bold">{MAX_BOOM_PLAYERS}</span> en escribir{" "}
-              <span className="text-amber-400 font-bold">{BOOM_ROUND_WORDS[(roundNumber - 1) % BOOM_ROUND_WORDS.length]}</span> en el chat participarán en la ronda {roundNumber}.
+              Los primeros <span className="text-amber-400 font-bold">{MAX_BOOM_PLAYERS}</span> en escribir{"! "}
+              <span className="text-amber-400 font-bold">"!_______"</span> en el chat participarán en la ronda {roundNumber}.
             </p>
             <div className="flex flex-wrap gap-2 min-h-[32px]">
               {players.map((p, i) => (
@@ -1201,6 +1203,101 @@ function RevealGame({ onFinish }: { onFinish: () => void }) {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// ChatPoll — live A/B/C vote counter from Twitch chat (60s)
+// ─────────────────────────────────────────────────────────────────
+
+function ChatPoll({ roundIdx }: { roundIdx: number }) {
+  const [counts, setCounts] = useState({ a: 0, b: 0, c: 0 });
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [active, setActive] = useState(true);
+  const countsRef = useRef({ a: 0, b: 0, c: 0 });
+
+  useEffect(() => {
+    countsRef.current = { a: 0, b: 0, c: 0 };
+    setCounts({ a: 0, b: 0, c: 0 });
+    setTimeLeft(60);
+    setActive(true);
+
+    const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
+    ws.onopen = () => {
+      ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands");
+      ws.send("PASS oauth:poop");
+      ws.send("NICK justinfan55555");
+      ws.send(`JOIN #${TWITCH_CHANNEL}`);
+    };
+    ws.onmessage = (e) => {
+      const raw = e.data as string;
+      const lines = raw.split("\r\n");
+      for (const line of lines) {
+        if (line.startsWith("PING")) { ws.send("PONG :tmi.twitch.tv"); continue; }
+        const match = line.match(/PRIVMSG #\S+ :(.+)/);
+        if (!match) continue;
+        const text = match[1].trim().toLowerCase();
+        if (text === "a" || text === "b" || text === "c") {
+          countsRef.current = { ...countsRef.current, [text]: countsRef.current[text] + 1 };
+          setCounts({ ...countsRef.current });
+        }
+      }
+    };
+
+    let elapsed = 0;
+    const timer = setInterval(() => {
+      elapsed += 1;
+      setTimeLeft(60 - elapsed);
+      if (elapsed >= 60) {
+        clearInterval(timer);
+        setActive(false);
+        ws.close();
+      }
+    }, 1000);
+
+    return () => { clearInterval(timer); ws.close(); };
+  }, [roundIdx]);
+
+  const total = counts.a + counts.b + counts.c;
+  const pct = (n: number) => total === 0 ? 0 : Math.round((n / total) * 100);
+  const labels: { key: "a" | "b" | "c"; label: string }[] = [
+    { key: "a", label: "A" },
+    { key: "b", label: "B" },
+    { key: "c", label: "C" },
+  ];
+
+  return (
+    <div className="w-52 flex-shrink-0 bg-neutral-800/40 border border-neutral-700 p-4 flex flex-col gap-5">
+      <div className="flex justify-between items-center border-b border-neutral-700 pb-3">
+        <span className="text-[10px] tracking-widest text-neutral-500 uppercase">Chat vota</span>
+        <span className={`text-base font-mono font-bold tabular-nums ${active ? "text-amber-400" : "text-neutral-500"}`}>
+          {active ? `${timeLeft}s` : "CERRADO"}
+        </span>
+      </div>
+
+      {labels.map(({ key, label }) => {
+        const count = counts[key];
+        const p = pct(count);
+        return (
+          <div key={key} className="flex flex-col gap-1">
+            <div className="flex justify-between items-baseline">
+              <span className="text-base font-bold text-neutral-200">{label}</span>
+              <span className="text-base text-neutral-400 tabular-nums">{count} · {p}%</span>
+            </div>
+            <div className="w-full bg-neutral-700 h-2 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-amber-400 rounded-full transition-all duration-300"
+                style={{ width: `${p}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+
+      <p className="text-[10px] text-neutral-600 tracking-widest text-center mt-auto">
+        {total} {total === 1 ? "voto" : "votos"}
+      </p>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
 // ChoiceGame — image-choice game (Day 1)
 // ─────────────────────────────────────────────────────────────────
 
@@ -1250,7 +1347,10 @@ function ChoiceGame({ onFinish }: { onFinish: () => void }) {
   }
 
   return (
-    <div className="w-full max-w-2xl flex flex-col gap-4">
+    <div className="flex gap-6 items-center w-full max-w-4xl">
+
+      {/* Game */}
+      <div className="flex-1 min-w-0 flex flex-col gap-4">
 
       {/* Progress */}
       <div className="flex items-center justify-between text-[10px] tracking-widest text-neutral-500">
@@ -1316,6 +1416,12 @@ function ChoiceGame({ onFinish }: { onFinish: () => void }) {
           </button>
         </motion.div>
       )}
+
+      </div>{/* end Game column */}
+
+      {/* Poll sidebar */}
+      <ChatPoll key={roundIdx} roundIdx={roundIdx} />
+
     </div>
   );
 }
@@ -1342,7 +1448,7 @@ export default function Home() {
 
   // ── Folder ──
   const [isOpen, setIsOpen] = useState(false);
-  const [unlockedUpTo, setUnlockedUpTo] = useState(7); // TODO: reset to 1
+  const [unlockedUpTo, setUnlockedUpTo] = useState(5); // TODO: reset to 1
 
   // ── Evidence / code ──
   const [activeCase, setActiveCase] = useState<number | null>(null);
