@@ -1484,7 +1484,9 @@ export default function Home() {
   // ── Auth handlers ──
   function handleLogin(e: React.SyntheticEvent) {
     e.preventDefault();
-    if (username.trim().toLowerCase() === "polispol" && password === "heladodementa") {
+    const u = username.trim().toLowerCase();
+    const valid = (u === "polispol" && password === "heladodementa") || (u === "suuggie" && password === "nosoyfandebts");
+    if (valid) {
       setIsLoggedIn(true); setAuthError("");
     } else {
       setAuthError("Credenciales inválidas.");
