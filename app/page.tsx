@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -309,10 +309,10 @@ function PasapalabraGame({
       <div className="border-b border-neutral-400 pb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FileText className="w-4 h-4 text-neutral-600" />
-          <span className="text-xs font-bold text-neutral-800 tracking-widest">PASAPALABRAS — ABECEDARIO</span>
+          <span className="text-base font-bold text-neutral-800 tracking-widest">PASAPALABRAS — ABECEDARIO</span>
         </div>
         {!state.finished && (
-          <span className="text-xs text-neutral-600 tracking-widest">{pendingCount} pendientes</span>
+          <span className="text-base text-neutral-600 tracking-widest">{pendingCount} pendientes</span>
         )}
       </div>
 
@@ -348,13 +348,13 @@ function PasapalabraGame({
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             {state.finished ? (
               <>
-                <p className="text-3xl font-bold text-neutral-800">
-                  {correctCount}<span className="text-lg text-neutral-500">/27</span>
+                <p className="text-4xl font-bold text-neutral-800">
+                  {correctCount}<span className="text-xl text-neutral-500">/27</span>
                 </p>
                 <p className="text-[10px] tracking-widest text-neutral-600 mt-1">CORRECTAS</p>
               </>
             ) : (
-              <p className="text-5xl font-bold text-amber-500 leading-none">{currentClue?.letter}</p>
+              <p className="text-6xl font-bold text-amber-500 leading-none">{currentClue?.letter}</p>
             )}
           </div>
         </div>
@@ -365,28 +365,28 @@ function PasapalabraGame({
         <div className="flex flex-col gap-3">
           <div className="bg-neutral-100 border border-neutral-300 p-3">
             <p className="text-[10px] text-neutral-500 tracking-widest mb-1">PISTA — {currentClue.letter}</p>
-            <p className="text-sm text-neutral-800 leading-relaxed">{currentClue.clue}</p>
+            <p className="text-base text-neutral-800 leading-relaxed">{currentClue.clue}</p>
           </div>
           <form onSubmit={e => { e.preventDefault(); onAnswer(); }} className="flex gap-2">
             <input
               type="text"
               value={state.currentInput}
               onChange={e => onInput(e.target.value.toUpperCase())}
-              className="flex-1 min-w-0 bg-white border border-neutral-400 text-neutral-800 px-2 py-1.5 text-xs tracking-[0.15em] uppercase focus:outline-none focus:border-neutral-600"
+              className="flex-1 min-w-0 bg-white border border-neutral-400 text-neutral-800 px-2 py-1.5 text-base tracking-[0.15em] uppercase focus:outline-none focus:border-neutral-600"
               placeholder="Tu respuesta"
               autoComplete="off"
             />
             <button
               type="submit"
               disabled={!state.currentInput.trim()}
-              className="bg-neutral-800 text-white px-3 py-1.5 text-xs tracking-widest hover:bg-neutral-700 transition-colors disabled:opacity-40 shrink-0"
+              className="bg-neutral-800 text-white px-3 py-1.5 text-base tracking-widest hover:bg-neutral-700 transition-colors disabled:opacity-40 shrink-0"
             >
               OK
             </button>
             <button
               type="button"
               onClick={onPass}
-              className="bg-neutral-300 text-neutral-800 px-3 py-1.5 text-xs tracking-widest hover:bg-neutral-200 transition-colors shrink-0"
+              className="bg-neutral-300 text-neutral-800 px-3 py-1.5 text-base tracking-widest hover:bg-neutral-200 transition-colors shrink-0"
             >
               PASAR
             </button>
@@ -395,7 +395,7 @@ function PasapalabraGame({
       )}
 
       {state.finished ? (
-        <p className="text-center text-xs text-neutral-600 tracking-[0.1em] py-1">
+        <p className="text-center text-base text-neutral-600 tracking-[0.1em] py-1">
           {incorrectCount === 0
             ? "¡Pasapalabras completado! Frase revelada íntegramente."
             : `${incorrectCount} error${incorrectCount !== 1 ? "es" : ""}. ${incorrectCount} letra${incorrectCount !== 1 ? "s" : ""} de la frase ocultada${incorrectCount !== 1 ? "s" : ""}.`}
@@ -403,7 +403,7 @@ function PasapalabraGame({
       ) : (
         <button
           onClick={onFinish}
-          className="text-neutral-500 text-xs tracking-widest hover:text-neutral-700 underline text-center transition-colors"
+          className="text-neutral-500 text-base tracking-widest hover:text-neutral-700 underline text-center transition-colors"
         >
           Terminar ronda
         </button>
@@ -501,10 +501,10 @@ function Day3Game({
 
       {/* ── Header: round + scores ── */}
       <div className="flex items-center justify-between">
-        <span className="text-neutral-400 text-xs tracking-widest">
+        <span className="text-neutral-400 text-base tracking-widest">
           RONDA {state.currentRound + 1} / {day3Rounds.length}
         </span>
-        <div className="flex items-center gap-4 text-sm font-bold tracking-widest">
+        <div className="flex items-center gap-4 text-base font-bold tracking-widest">
           <span className={state.streamerScore > state.chatScore ? "text-green-400" : "text-neutral-300"}>
             POLISPOL {state.streamerScore}
           </span>
@@ -539,7 +539,7 @@ function Day3Game({
                   </div>
                 )
               ) : (
-                <span className="text-3xl font-bold text-neutral-700">{i + 1}</span>
+                <span className="text-4xl font-bold text-neutral-700">{i + 1}</span>
               )}
             </div>
           ))}
@@ -572,7 +572,7 @@ function Day3Game({
       {!state.roundActive && !hasWinner && !state.gameFinished && (
         <button
           onClick={onStartRound}
-          className="w-full bg-neutral-800 text-neutral-100 py-3 text-sm tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-700"
+          className="w-full bg-neutral-800 text-neutral-100 py-3 text-base tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-700"
         >
           INICIAR RONDA {state.currentRound + 1}
         </button>
@@ -584,7 +584,7 @@ function Day3Game({
             type="text"
             value={input}
             onChange={e => setInput(e.target.value.toUpperCase())}
-            className="flex-1 bg-neutral-900 border border-neutral-600 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-neutral-400 tracking-[0.2em] uppercase placeholder:text-neutral-700 placeholder:tracking-normal"
+            className="flex-1 bg-neutral-900 border border-neutral-600 text-neutral-100 px-3 py-2 text-base focus:outline-none focus:border-neutral-400 tracking-[0.2em] uppercase placeholder:text-neutral-700 placeholder:tracking-normal"
             placeholder="Tu respuesta..."
             autoComplete="off"
             autoFocus
@@ -592,7 +592,7 @@ function Day3Game({
           <button
             type="submit"
             disabled={!input.trim()}
-            className="bg-neutral-700 text-neutral-200 px-5 py-2 text-xs tracking-[0.2em] hover:bg-neutral-600 transition-colors border border-neutral-600 disabled:opacity-30 shrink-0"
+            className="bg-neutral-700 text-neutral-200 px-5 py-2 text-base tracking-[0.2em] hover:bg-neutral-600 transition-colors border border-neutral-600 disabled:opacity-30 shrink-0"
           >
             ADIVINAR
           </button>
@@ -608,17 +608,17 @@ function Day3Game({
             }`}
         >
           <div>
-            <p className={`text-sm font-bold tracking-widest ${state.roundWinner === "streamer" ? "text-yellow-400" : "text-purple-400"
+            <p className={`text-base font-bold tracking-widest ${state.roundWinner === "streamer" ? "text-yellow-400" : "text-purple-400"
               }`}>
               {state.roundWinner === "streamer" ? "¡POLISPOL GANA LA RONDA!" : "¡EL CHAT GANA LA RONDA!"}
             </p>
-            <p className="text-neutral-400 text-xs mt-1 tracking-widest">
+            <p className="text-neutral-400 text-base mt-1 tracking-widest">
               LA PALABRA ERA: <span className="text-neutral-100 font-bold">{round?.word}</span>
             </p>
           </div>
           <button
             onClick={onNextRound}
-            className="bg-neutral-700 text-neutral-200 px-4 py-2 text-xs tracking-[0.2em] hover:bg-neutral-600 transition-colors border border-neutral-600 shrink-0"
+            className="bg-neutral-700 text-neutral-200 px-4 py-2 text-base tracking-[0.2em] hover:bg-neutral-600 transition-colors border border-neutral-600 shrink-0"
           >
             {isLast ? "VER RESULTADO →" : `RONDA ${state.currentRound + 2} →`}
           </button>
@@ -631,18 +631,18 @@ function Day3Game({
           className="border border-neutral-600 bg-neutral-800/60 p-6 text-center"
         >
           <p className="text-neutral-400 text-[10px] tracking-[0.3em] mb-2">PARTIDA COMPLETADA</p>
-          <p className="text-3xl font-bold tracking-widest mb-1">
+          <p className="text-4xl font-bold tracking-widest mb-1">
             {state.streamerScore > state.chatScore
               ? <span className="text-yellow-400">POLISPOL GANA</span>
               : state.chatScore > state.streamerScore
                 ? <span className="text-purple-400">CHAT GANA</span>
                 : <span className="text-neutral-200">EMPATE</span>}
           </p>
-          <p className="text-neutral-500 text-sm tracking-widest">
+          <p className="text-neutral-500 text-base tracking-widest">
             {state.streamerScore} — {state.chatScore}
           </p>
           {state.streamerScore > state.chatScore && (
-            <p className="text-yellow-400/70 text-xs tracking-[0.3em] mt-3">
+            <p className="text-yellow-400/70 text-base tracking-[0.3em] mt-3">
               PALABRA CLAVE: <span className="text-yellow-400 font-bold">RASTRO</span>
             </p>
           )}
@@ -854,7 +854,7 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
 
       {/* Header */}
       <div className="flex items-center justify-between">
-        <span className="text-neutral-400 text-xs tracking-widest">
+        <span className="text-neutral-400 text-base tracking-widest">
           {phase === "finished"
             ? "PARTIDA FINALIZADA"
             : `RONDA ${roundNumber} / ${TOTAL_ROUNDS}${phase === "playing" ? ` — ${countAlive(players)} EN JUEGO` : ""}`}
@@ -869,18 +869,18 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
       {phase === "waiting" && (
         <div className="flex flex-col gap-4">
           <div className="bg-neutral-800/40 border border-neutral-700 p-4">
-            <p className="text-neutral-400 text-xs tracking-widest mb-3">
+            <p className="text-neutral-400 text-base tracking-widest mb-3">
               Los primeros <span className="text-amber-400 font-bold">{MAX_BOOM_PLAYERS}</span> en escribir{" "}
               <span className="text-amber-400 font-bold">{BOOM_ROUND_WORDS[(roundNumber - 1) % BOOM_ROUND_WORDS.length]}</span> en el chat participarán en la ronda {roundNumber}.
             </p>
             <div className="flex flex-wrap gap-2 min-h-[32px]">
               {players.map((p, i) => (
-                <span key={i} className="bg-neutral-700 text-neutral-200 px-2 py-1 text-xs tracking-wider">
+                <span key={i} className="bg-neutral-700 text-neutral-200 px-2 py-1 text-base tracking-wider">
                   {i + 1}. {p.name}
                 </span>
               ))}
               {players.length === 0 && (
-                <span className="text-neutral-600 text-xs italic">Esperando jugadores...</span>
+                <span className="text-neutral-600 text-base italic">Esperando jugadores...</span>
               )}
             </div>
           </div>
@@ -895,7 +895,7 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
               setPhase("playing");
             }}
             disabled={players.length < 2}
-            className="w-full bg-neutral-800 text-neutral-100 py-3 text-sm tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-700 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="w-full bg-neutral-800 text-neutral-100 py-3 text-base tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-700 disabled:opacity-30 disabled:cursor-not-allowed"
           >
             {players.length < 2
               ? `ESPERANDO JUGADORES (${players.length} / ${MAX_BOOM_PLAYERS})`
@@ -914,13 +914,13 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
             <p className="text-[10px] tracking-widest text-amber-500/70 mb-1">
               GANADOR / GANADORA — RONDA {roundNumber}
             </p>
-            <p className="text-2xl font-bold text-amber-400 tracking-widest break-words mt-2">
+            <p className="text-3xl font-bold text-amber-400 tracking-widest break-words mt-2">
               {roundWinner}
             </p>
           </motion.div>
           <button
             onClick={handleNextRound}
-            className="w-full bg-neutral-800 text-neutral-100 py-3 text-sm tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-700"
+            className="w-full bg-neutral-800 text-neutral-100 py-3 text-base tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-700"
           >
             {roundNumber >= TOTAL_ROUNDS ? "FINALIZAR PARTIDA →" : `RONDA ${roundNumber + 1} →`}
           </button>
@@ -934,8 +934,8 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
           className="border border-neutral-600 bg-neutral-800/40 p-6 text-center"
         >
           <p className="text-[10px] tracking-widest text-neutral-500 mb-2">PARTIDA COMPLETADA — {TOTAL_ROUNDS} RONDAS</p>
-          <p className="text-neutral-400 text-sm mb-3">Ingresa el código para continuar.</p>
-          <p className="text-amber-500/70 text-xs tracking-[0.3em]">
+          <p className="text-neutral-400 text-base mb-3">Ingresa el código para continuar.</p>
+          <p className="text-amber-500/70 text-base tracking-[0.3em]">
             PALABRA CLAVE: <span className="text-amber-400 font-bold">ORIGINAL</span>
           </p>
         </motion.div>
@@ -998,7 +998,7 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
 
             {/* Timer */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <span className={`text-5xl font-bold tabular-nums ${timeLeft <= 2 ? "text-red-400" : timeLeft <= 3 ? "text-yellow-400" : "text-green-400"
+              <span className={`text-6xl font-bold tabular-nums ${timeLeft <= 2 ? "text-red-400" : timeLeft <= 3 ? "text-yellow-400" : "text-green-400"
                 }`}>
                 {timeLeft}
               </span>
@@ -1012,14 +1012,14 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
             {question && (
               <div className="bg-neutral-900 border border-neutral-600 p-3">
                 <p className="text-[10px] text-neutral-500 tracking-widest mb-1.5">PREGUNTA</p>
-                <p className="text-sm text-neutral-100 leading-relaxed">{question.text}</p>
+                <p className="text-base text-neutral-100 leading-relaxed">{question.text}</p>
               </div>
             )}
 
             {/* Turn */}
             <div className="bg-neutral-800/60 border border-neutral-700 px-3 py-2">
               <p className="text-[10px] text-neutral-500 tracking-widest mb-0.5">TURNO DE</p>
-              <p className="text-sm font-bold text-amber-400 tracking-wider truncate">
+              <p className="text-base font-bold text-amber-400 tracking-wider truncate">
                 {players[currentIdx]?.name}
               </p>
             </div>
@@ -1031,7 +1031,7 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
                   type="text"
                   value={streamerInput}
                   onChange={e => setStreamerInput(e.target.value)}
-                  className="flex-1 min-w-0 bg-neutral-900 border border-amber-600 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-amber-400 placeholder:text-neutral-600"
+                  className="flex-1 min-w-0 bg-neutral-900 border border-amber-600 text-neutral-100 px-3 py-2 text-base focus:outline-none focus:border-amber-400 placeholder:text-neutral-600"
                   placeholder="Tu respuesta..."
                   autoComplete="off"
                   autoFocus
@@ -1039,7 +1039,7 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
                 <button
                   type="submit"
                   disabled={!streamerInput.trim()}
-                  className="bg-amber-700 text-neutral-100 px-4 py-2 text-xs tracking-[0.2em] hover:bg-amber-600 transition-colors border border-amber-600 disabled:opacity-30 shrink-0"
+                  className="bg-amber-700 text-neutral-100 px-4 py-2 text-base tracking-[0.2em] hover:bg-amber-600 transition-colors border border-amber-600 disabled:opacity-30 shrink-0"
                 >
                   ENVIAR
                 </button>
@@ -1108,14 +1108,14 @@ function RevealGame({ onFinish }: { onFinish: () => void }) {
       >
         <div className="border border-neutral-600 bg-neutral-800/40 p-6 text-center">
           <p className="text-[10px] tracking-widest text-neutral-500 mb-2">SECUENCIA COMPLETADA — {revealRounds.length} IMÁGENES</p>
-          <p className="text-neutral-400 text-sm mb-4">Ingresa el código para continuar.</p>
-          <p className="text-amber-500/70 text-xs tracking-[0.3em]">
+          <p className="text-neutral-400 text-base mb-4">Ingresa el código para continuar.</p>
+          <p className="text-amber-500/70 text-base tracking-[0.3em]">
             PALABRA CLAVE: <span className="text-amber-400 font-bold">SABIDURIA</span>
           </p>
         </div>
         <button
           onClick={onFinish}
-          className="w-full bg-neutral-800 text-neutral-100 py-3 text-sm tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-600"
+          className="w-full bg-neutral-800 text-neutral-100 py-3 text-base tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-600"
         >
           CONTINUAR →
         </button>
@@ -1158,7 +1158,7 @@ function RevealGame({ onFinish }: { onFinish: () => void }) {
           />
           <div className="w-full px-4 py-3 flex items-center justify-between border-t border-neutral-700">
             <span className="text-[10px] tracking-widest text-neutral-500">RESPUESTA</span>
-            <span className={`text-sm font-bold tracking-wider ${correct ? "text-green-400" : "text-amber-400"}`}>
+            <span className={`text-base font-bold tracking-wider ${correct ? "text-green-400" : "text-amber-400"}`}>
               {round.answer.toUpperCase()}
             </span>
           </div>
@@ -1172,7 +1172,7 @@ function RevealGame({ onFinish }: { onFinish: () => void }) {
             type="text"
             value={input}
             onChange={e => setInput(e.target.value)}
-            className="flex-1 bg-neutral-900 border border-neutral-600 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-neutral-400 placeholder:text-neutral-600 uppercase"
+            className="flex-1 bg-neutral-900 border border-neutral-600 text-neutral-100 px-3 py-2 text-base focus:outline-none focus:border-neutral-400 placeholder:text-neutral-600 uppercase"
             placeholder="¿Qué ves en la imagen?"
             autoComplete="off"
             autoFocus
@@ -1180,7 +1180,7 @@ function RevealGame({ onFinish }: { onFinish: () => void }) {
           <button
             type="submit"
             disabled={!input.trim()}
-            className="bg-neutral-800 text-neutral-100 px-4 py-2 text-xs tracking-[0.2em] hover:bg-neutral-700 transition-colors border border-neutral-600 disabled:opacity-30"
+            className="bg-neutral-800 text-neutral-100 px-4 py-2 text-base tracking-[0.2em] hover:bg-neutral-700 transition-colors border border-neutral-600 disabled:opacity-30"
           >
             REVELAR
           </button>
@@ -1191,7 +1191,7 @@ function RevealGame({ onFinish }: { onFinish: () => void }) {
       {revealed && (
         <button
           onClick={handleNext}
-          className="w-full bg-neutral-800 text-neutral-100 py-3 text-sm tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-600"
+          className="w-full bg-neutral-800 text-neutral-100 py-3 text-base tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-600"
         >
           {isLast ? "FINALIZAR →" : "SIGUIENTE →"}
         </button>
@@ -1234,14 +1234,14 @@ function ChoiceGame({ onFinish }: { onFinish: () => void }) {
       >
         <div className="border border-neutral-600 bg-neutral-800/40 p-6 text-center">
           <p className="text-[10px] tracking-widest text-neutral-500 mb-2">SECUENCIA COMPLETADA — {choiceRounds.length} RONDAS</p>
-          <p className="text-neutral-400 text-sm mb-4">Ingresa el código para continuar.</p>
-          <p className="text-amber-500/70 text-xs tracking-[0.3em]">
+          <p className="text-neutral-400 text-base mb-4">Ingresa el código para continuar.</p>
+          <p className="text-amber-500/70 text-base tracking-[0.3em]">
             CÓDIGO: <span className="text-amber-400 font-bold">JUICIO</span>
           </p>
         </div>
         <button
           onClick={onFinish}
-          className="w-full bg-neutral-800 text-neutral-100 py-3 text-sm tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-600"
+          className="w-full bg-neutral-800 text-neutral-100 py-3 text-base tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-600"
         >
           CONTINUAR →
         </button>
@@ -1259,7 +1259,7 @@ function ChoiceGame({ onFinish }: { onFinish: () => void }) {
       </div>
 
       {/* Phrase — above the images */}
-      <p className="text-sm text-neutral-200 leading-relaxed text-center tracking-wide border border-neutral-700 bg-neutral-800/40 px-4 py-3">
+      <p className="text-base text-neutral-200 leading-relaxed text-center tracking-wide border border-neutral-700 bg-neutral-800/40 px-4 py-3">
         {round.phrase}
       </p>
 
@@ -1306,11 +1306,11 @@ function ChoiceGame({ onFinish }: { onFinish: () => void }) {
             />
           </div>
           <div className="border border-neutral-700 bg-neutral-800/40 px-4 py-3">
-            <p className="text-sm text-neutral-300 leading-relaxed">{round.revealText}</p>
+            <p className="text-base text-neutral-300 leading-relaxed">{round.revealText}</p>
           </div>
           <button
             onClick={handleNext}
-            className="w-full bg-neutral-800 text-neutral-100 py-3 text-sm tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-600"
+            className="w-full bg-neutral-800 text-neutral-100 py-3 text-base tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-600"
           >
             {isLast ? "FINALIZAR →" : "SIGUIENTE →"}
           </button>
@@ -1342,7 +1342,7 @@ export default function Home() {
 
   // ── Folder ──
   const [isOpen, setIsOpen] = useState(false);
-  const [unlockedUpTo, setUnlockedUpTo] = useState(1);
+  const [unlockedUpTo, setUnlockedUpTo] = useState(7); // TODO: reset to 1
 
   // ── Evidence / code ──
   const [activeCase, setActiveCase] = useState<number | null>(null);
@@ -1539,10 +1539,10 @@ export default function Home() {
               <div className="mb-6 text-center">
                 <div className="flex items-center justify-center gap-2 mb-3">
                   <Shield className="w-4 h-4 text-red-700" />
-                  <span className="text-red-700 tracking-[0.3em] text-xs font-bold">ACCESO RESTRINGIDO</span>
+                  <span className="text-red-700 tracking-[0.3em] text-base font-bold">ACCESO RESTRINGIDO</span>
                   <Shield className="w-4 h-4 text-red-700" />
                 </div>
-                <h1 className="text-neutral-200 text-3xl font-bold tracking-[0.4em]">POLISPOL</h1>
+                <h1 className="text-neutral-200 text-4xl font-bold tracking-[0.4em]">POLISPOL</h1>
                 <div className="w-full h-px bg-neutral-700 mt-4" />
               </div>
 
@@ -1555,7 +1555,7 @@ export default function Home() {
                   >
                     {(["login", "register"] as const).map(tab => (
                       <button key={tab} onClick={() => switchView(tab)}
-                        className={`flex-1 py-2 text-xs tracking-[0.2em] transition-colors border-b-2 -mb-px ${loginView === tab ? "text-neutral-200 border-neutral-400" : "text-neutral-600 border-transparent hover:text-neutral-400"
+                        className={`flex-1 py-2 text-base tracking-[0.2em] transition-colors border-b-2 -mb-px ${loginView === tab ? "text-neutral-200 border-neutral-400" : "text-neutral-600 border-transparent hover:text-neutral-400"
                           }`}>
                         {tab === "login" ? "ACCESO" : "REGISTRO"}
                       </button>
@@ -1570,23 +1570,23 @@ export default function Home() {
                   <motion.div key="login" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }}>
                     <form onSubmit={handleLogin} className="space-y-5">
                       <div>
-                        <label className="block text-neutral-500 text-xs tracking-[0.2em] mb-1">ACUSADO</label>
+                        <label className="block text-neutral-500 text-base tracking-[0.2em] mb-1">ACUSADO</label>
                         <input type="text" value={username} onChange={e => setUsername(e.target.value)} autoComplete="username"
-                          className="w-full bg-neutral-800 border border-neutral-700 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-neutral-500 tracking-wider placeholder:text-neutral-600"
+                          className="w-full bg-neutral-800 border border-neutral-700 text-neutral-100 px-3 py-2 text-base focus:outline-none focus:border-neutral-500 tracking-wider placeholder:text-neutral-600"
                           placeholder="ID de acusado" />
                       </div>
                       <div>
-                        <label className="block text-neutral-500 text-xs tracking-[0.2em] mb-1">CLAVE DE ACCESO</label>
+                        <label className="block text-neutral-500 text-base tracking-[0.2em] mb-1">CLAVE DE ACCESO</label>
                         <input type="password" value={password} onChange={e => setPassword(e.target.value)} autoComplete="current-password"
-                          className="w-full bg-neutral-800 border border-neutral-700 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-neutral-500 tracking-wider placeholder:text-neutral-600"
+                          className="w-full bg-neutral-800 border border-neutral-700 text-neutral-100 px-3 py-2 text-base focus:outline-none focus:border-neutral-500 tracking-wider placeholder:text-neutral-600"
                           placeholder="••••••••" />
                       </div>
-                      {authError && <p className="text-red-600 text-xs tracking-widest">{authError}</p>}
-                      <button type="submit" className="w-full bg-neutral-800 text-neutral-200 py-2 tracking-[0.2em] text-sm hover:bg-neutral-700 transition-colors border border-neutral-700 hover:border-neutral-500">
+                      {authError && <p className="text-red-600 text-base tracking-widest">{authError}</p>}
+                      <button type="submit" className="w-full bg-neutral-800 text-neutral-200 py-2 tracking-[0.2em] text-base hover:bg-neutral-700 transition-colors border border-neutral-700 hover:border-neutral-500">
                         INGRESAR
                       </button>
                     </form>
-                    <button onClick={() => switchView("forgot")} className="mt-4 w-full text-center text-neutral-600 hover:text-neutral-400 text-xs tracking-[0.15em] transition-colors">
+                    <button onClick={() => switchView("forgot")} className="mt-4 w-full text-center text-neutral-600 hover:text-neutral-400 text-base tracking-[0.15em] transition-colors">
                       ¿Olvidaste tu clave de acceso?
                     </button>
                   </motion.div>
@@ -1596,25 +1596,25 @@ export default function Home() {
                   <motion.div key="register" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }}>
                     <form onSubmit={handleRegister} className="space-y-5">
                       <div>
-                        <label className="block text-neutral-500 text-xs tracking-[0.2em] mb-1">CORREO ELECTRÓNICO</label>
+                        <label className="block text-neutral-500 text-base tracking-[0.2em] mb-1">CORREO ELECTRÓNICO</label>
                         <input type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)} autoComplete="email"
-                          className="w-full bg-neutral-800 border border-neutral-700 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-neutral-500 tracking-wider placeholder:text-neutral-600"
+                          className="w-full bg-neutral-800 border border-neutral-700 text-neutral-100 px-3 py-2 text-base focus:outline-none focus:border-neutral-500 tracking-wider placeholder:text-neutral-600"
                           placeholder="agente@polispol.com" />
                       </div>
                       <div>
-                        <label className="block text-neutral-500 text-xs tracking-[0.2em] mb-1">NOMBRE DE AGENTE</label>
+                        <label className="block text-neutral-500 text-base tracking-[0.2em] mb-1">NOMBRE DE AGENTE</label>
                         <input type="text" value={regUsername} onChange={e => setRegUsername(e.target.value)} autoComplete="username"
-                          className="w-full bg-neutral-800 border border-neutral-700 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-neutral-500 tracking-wider placeholder:text-neutral-600"
+                          className="w-full bg-neutral-800 border border-neutral-700 text-neutral-100 px-3 py-2 text-base focus:outline-none focus:border-neutral-500 tracking-wider placeholder:text-neutral-600"
                           placeholder="ID de acusado" />
                       </div>
                       <div>
-                        <label className="block text-neutral-500 text-xs tracking-[0.2em] mb-1">CLAVE DE ACCESO</label>
+                        <label className="block text-neutral-500 text-base tracking-[0.2em] mb-1">CLAVE DE ACCESO</label>
                         <input type="password" value={regPassword} onChange={e => setRegPassword(e.target.value)} autoComplete="new-password"
-                          className="w-full bg-neutral-800 border border-neutral-700 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-neutral-500 tracking-wider placeholder:text-neutral-600"
+                          className="w-full bg-neutral-800 border border-neutral-700 text-neutral-100 px-3 py-2 text-base focus:outline-none focus:border-neutral-500 tracking-wider placeholder:text-neutral-600"
                           placeholder="••••••••" />
                       </div>
-                      {authError && <p className="text-red-600 text-xs tracking-widest">{authError}</p>}
-                      <button type="submit" className="w-full bg-neutral-800 text-neutral-200 py-2 tracking-[0.2em] text-sm hover:bg-neutral-700 transition-colors border border-neutral-700 hover:border-neutral-500">
+                      {authError && <p className="text-red-600 text-base tracking-widest">{authError}</p>}
+                      <button type="submit" className="w-full bg-neutral-800 text-neutral-200 py-2 tracking-[0.2em] text-base hover:bg-neutral-700 transition-colors border border-neutral-700 hover:border-neutral-500">
                         SOLICITAR ACCESO
                       </button>
                     </form>
@@ -1623,28 +1623,28 @@ export default function Home() {
 
                 {loginView === "forgot" && (
                   <motion.div key="forgot" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }}>
-                    <button onClick={() => switchView("login")} className="flex items-center gap-1 text-neutral-600 hover:text-neutral-400 text-xs tracking-widest mb-6 transition-colors">
+                    <button onClick={() => switchView("login")} className="flex items-center gap-1 text-neutral-600 hover:text-neutral-400 text-base tracking-widest mb-6 transition-colors">
                       <ArrowLeft className="w-3 h-3" /> VOLVER AL ACCESO
                     </button>
-                    <p className="text-neutral-400 text-xs tracking-[0.15em] mb-5 leading-relaxed">
+                    <p className="text-neutral-400 text-base tracking-[0.15em] mb-5 leading-relaxed">
                       Ingresa tu correo registrado. Se enviarán instrucciones para restablecer tu clave.
                     </p>
                     {!forgotSent ? (
                       <form onSubmit={handleForgotPassword} className="space-y-5">
                         <div>
-                          <label className="block text-neutral-500 text-xs tracking-[0.2em] mb-1">CORREO ELECTRÓNICO</label>
+                          <label className="block text-neutral-500 text-base tracking-[0.2em] mb-1">CORREO ELECTRÓNICO</label>
                           <input type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} autoComplete="email"
-                            className="w-full bg-neutral-800 border border-neutral-700 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-neutral-500 tracking-wider placeholder:text-neutral-600"
+                            className="w-full bg-neutral-800 border border-neutral-700 text-neutral-100 px-3 py-2 text-base focus:outline-none focus:border-neutral-500 tracking-wider placeholder:text-neutral-600"
                             placeholder="agente@polispol.com" />
                         </div>
-                        {authError && <p className="text-red-600 text-xs tracking-widest">{authError}</p>}
-                        <button type="submit" className="w-full bg-neutral-800 text-neutral-200 py-2 tracking-[0.2em] text-sm hover:bg-neutral-700 transition-colors border border-neutral-700 hover:border-neutral-500">
+                        {authError && <p className="text-red-600 text-base tracking-widest">{authError}</p>}
+                        <button type="submit" className="w-full bg-neutral-800 text-neutral-200 py-2 tracking-[0.2em] text-base hover:bg-neutral-700 transition-colors border border-neutral-700 hover:border-neutral-500">
                           ENVIAR INSTRUCCIONES
                         </button>
                       </form>
                     ) : (
                       <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-                        className="border border-neutral-700 bg-neutral-800/50 p-4 text-center text-neutral-400 text-xs tracking-widest leading-relaxed">
+                        className="border border-neutral-700 bg-neutral-800/50 p-4 text-center text-neutral-400 text-base tracking-widest leading-relaxed">
                         INSTRUCCIONES ENVIADAS.<br />Revisa tu correo.
                       </motion.div>
                     )}
@@ -1653,7 +1653,7 @@ export default function Home() {
 
               </AnimatePresence>
 
-              <p className="mt-8 text-center text-neutral-700 text-xs tracking-[0.2em]">NIVEL DE CLASIFICACIÓN: ALTO</p>
+              <p className="mt-8 text-center text-neutral-700 text-base tracking-[0.2em]">NIVEL DE CLASIFICACIÓN: ALTO</p>
             </div>
           </motion.div>
         )}
@@ -1682,22 +1682,22 @@ export default function Home() {
               {/* Briefing document */}
               <div className="bg-[#f4f1ea] border border-neutral-300 shadow-2xl p-8 relative">
                 {/* Stamp */}
-                <div className="absolute top-4 right-4 border-2 border-red-800 text-red-800 font-bold px-2 py-1 text-xs rotate-6 opacity-80 tracking-widest">
+                <div className="absolute top-4 right-4 border-2 border-red-800 text-red-800 font-bold px-2 py-1 text-base rotate-6 opacity-80 tracking-widest">
                   CONFIDENCIAL
                 </div>
 
                 {/* Header */}
                 <div className="border-b-2 border-neutral-800 pb-4 mb-6">
                   <p className="text-neutral-500 text-[10px] tracking-[0.3em] mb-1">EXPEDIENTE POLISPOL</p>
-                  <h2 className="text-2xl font-bold text-neutral-800 tracking-widest">BIENVENIDO, <span className="text-red-800">{username.toUpperCase()}</span></h2>
+                  <h2 className="text-3xl font-bold text-neutral-800 tracking-widest">BIENVENIDO, <span className="text-red-800">{username.toUpperCase()}</span></h2>
                 </div>
 
                 {/* Body — placeholder text, replace with real context */}
-                <div className="space-y-4 text-sm text-neutral-700 leading-relaxed">
-                  <p>
+                <div className="space-y-4 text-base text-neutral-700 leading-relaxed">
+                  <p className="text-justify">
                     Si ha llegado hasta este punto es momento de iniciar con su defensa. Su misión será resolver una serie de casos que requieren habilidades analíticas, deductivas y de trabajo en equipo.
                   </p>
-                  <p>
+                  <p className="text-justify">
                     Durante 7 días enfrentara diversos casos que lo ayudaran a liberarse de ser el sospechoso y de limpiar su expediente, se enfrentara a una prueba por día que de completar de manera correcta le permitirá avanzar al siguiente día.
                   </p>
                   <p>
@@ -1710,7 +1710,7 @@ export default function Home() {
                   <p className="text-neutral-400 text-[10px] tracking-widest">NIVEL DE ACCESO: AUTORIZADO</p>
                   <button
                     onClick={() => setIntroSeen(true)}
-                    className="bg-neutral-800 text-[#f4f1ea] px-6 py-2 text-xs tracking-[0.25em] hover:bg-neutral-700 transition-colors border border-neutral-700"
+                    className="bg-neutral-800 text-[#f4f1ea] px-6 py-2 text-base tracking-[0.25em] hover:bg-neutral-700 transition-colors border border-neutral-700"
                   >
                     ABRIR EXPEDIENTE →
                   </button>
@@ -1722,17 +1722,17 @@ export default function Home() {
           {/* ── Vista: Carpeta ── */}
           {(!isLoggedIn || introSeen) && activeCase === null && (
             <motion.div key="folder-view" initial={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ duration: 0.3 }} className="flex flex-col items-center">
-              <div className="relative w-[340px] h-[420px] cursor-pointer perspective-[1200px]" onClick={() => setIsOpen(!isOpen)}>
+              <div className="relative w-[420px] h-[600px] cursor-pointer perspective-[1200px]" onClick={() => setIsOpen(!isOpen)}>
 
                 <div className="absolute inset-0 bg-[#c29b62] rounded-b-lg rounded-tr-lg shadow-2xl border border-[#a68250]">
                   <div className="absolute -top-10 left-0 w-40 h-10 bg-[#c29b62] rounded-t-lg border-t border-l border-r border-[#a68250] flex items-center px-4">
-                    <span className="text-neutral-900 font-bold tracking-widest text-sm opacity-60">EXPEDIENTE</span>
+                    <span className="text-neutral-900 font-bold tracking-widest text-base opacity-60">EXPEDIENTE</span>
                   </div>
                   <div className="absolute top-4 right-4 border-2 border-red-800 text-red-800 font-bold px-2 py-1 transform rotate-12 opacity-80">CONFIDENCIAL</div>
                 </div>
 
                 <div className={`absolute inset-0 p-4 ${!isOpen ? "pointer-events-none" : ""}`}>
-                  {orderedCases.map((c, index) => {
+                  {orderedCases.slice(0, 1).map((c) => {
                     const isActive = c.id === unlockedUpTo && !allSolved;
                     const isSolved = c.id < unlockedUpTo;
                     const isLocked = c.id > unlockedUpTo;
@@ -1742,34 +1742,33 @@ export default function Home() {
                       <motion.div
                         key={c.id}
                         initial={false}
-                        animate={{ y: isOpen ? -55 - index * 15 : 0, scale: isOpen ? 1 : 0.95 }}
-                        transition={{ duration: 0.5, delay: isOpen ? index * 0.07 : 0, ease: "backOut" }}
+                        animate={{ y: isOpen ? 0 : 8, opacity: isOpen ? 1 : 0 }}
+                        transition={{ duration: 0.4, ease: "easeOut" }}
                         onClick={e => { e.stopPropagation(); if (accessible) openCase(c.id); }}
                         className={`absolute top-4 left-4 right-4 bottom-4 bg-[#f4f1ea] rounded shadow-md border border-neutral-300 p-6 flex flex-col ${accessible ? "cursor-pointer" : "cursor-default"}`}
-                        style={{ zIndex: 10 - index }}
                       >
                         <div className="border-b-2 border-neutral-800 pb-2 mb-4 flex justify-between items-center">
-                          <h2 className="text-xl font-bold text-neutral-800 flex items-center gap-2">
+                          <h2 className="text-2xl font-bold text-neutral-800 flex items-center gap-2">
                             <FileText className="w-5 h-5" /> Caso #{c.id}
                           </h2>
                           {isLocked && <Lock className="w-5 h-5 text-neutral-500" />}
-                          {isSolved && <span className="text-blue-700  font-bold text-sm">RESUELTO</span>}
-                          {isActive && <span className="text-green-700 font-bold text-sm">ACTIVO</span>}
+                          {isSolved && <span className="text-blue-700  font-bold text-base">RESUELTO</span>}
+                          {isActive && <span className="text-green-700 font-bold text-base">ACTIVO</span>}
                         </div>
-                        <h3 className="text-lg font-bold text-neutral-700 mb-2">{c.title}</h3>
+                        <h3 className="text-xl font-bold text-neutral-700 mb-2">{c.title}</h3>
                         {(isLocked || (isActive && !isLoggedIn)) && (
-                          <div className="mt-auto bg-neutral-200 p-3 text-center text-neutral-500 text-sm border border-neutral-300 border-dashed">
+                          <div className="mt-auto bg-neutral-200 p-3 text-center text-neutral-500 text-base border border-neutral-300 border-dashed">
                             CONTENIDO RESTRINGIDO.<br />Autorización pendiente.
                           </div>
                         )}
                         {isSolved && (
-                          <div className="mt-auto bg-blue-50 border border-blue-200 border-dashed p-3 text-center text-blue-600 text-sm">
+                          <div className="mt-auto bg-blue-50 border border-blue-200 border-dashed p-3 text-center text-blue-600 text-base">
                             CASO RESUELTO.
                           </div>
                         )}
                         {accessible && (
-                          <div className="mt-auto flex flex-col min-h-0">
-                            <p className="text-sm text-neutral-600 mb-4 overflow-y-auto max-h-[180px]">
+                          <div className="flex flex-col flex-1 min-h-0">
+                            <p className="text-base text-neutral-600 mb-4 text-justify">
                               {c.id === 1
                                 ? "Nuestras unidades de inteligencia lo han descubierto en reiteradas ocasiones causando el caos en internet. Hemos interceptado una serie de comentarios mediáticos y altamente polémicos que realizó sobre el séptimo arte. Ha llegado la hora de que dé la cara y demuestre si es capaz de reconocer los hechos que se le imputan."
                                 : c.id === 2
@@ -1784,7 +1783,7 @@ export default function Home() {
                             </p>
                             <button
                               onClick={e => { e.stopPropagation(); openCase(c.id); }}
-                              className="w-full bg-neutral-800 text-[#f4f1ea] py-2 hover:bg-neutral-700 transition-colors text-sm tracking-widest"
+                              className="mt-auto w-full bg-neutral-800 text-[#f4f1ea] py-2 hover:bg-neutral-700 transition-colors text-base tracking-widest"
                             >
                               INSPECCIONAR EVIDENCIA
                             </button>
@@ -1803,12 +1802,12 @@ export default function Home() {
                   className="absolute inset-0 bg-[#d4a86a] rounded-b-lg rounded-tr-lg shadow-inner border border-[#b88f56] z-20 flex flex-col items-center justify-center pointer-events-none"
                 >
                   <div className="w-3/4 h-1/2 border-4 border-[#b88f56]/50 rounded flex items-center justify-center">
-                    <div className="text-red-800 font-bold text-4xl uppercase tracking-[0.2em] -rotate-45">POLISPOL</div>
+                    <div className="text-red-800 font-bold text-5xl uppercase tracking-[0.2em] -rotate-45">POLISPOL</div>
                   </div>
                 </motion.div>
               </div>
 
-              <motion.p animate={{ opacity: isOpen ? 0 : 1 }} className="mt-6 text-neutral-500 tracking-widest text-sm">
+              <motion.p animate={{ opacity: isOpen ? 0 : 1 }} className="mt-6 text-neutral-500 tracking-widest text-base">
                 [ CLICK PARA ABRIR EXPEDIENTE ]
               </motion.p>
             </motion.div>
@@ -1824,10 +1823,10 @@ export default function Home() {
             >
               {/* Header */}
               <div className="flex items-center justify-between w-full max-w-2xl">
-                <button onClick={closeEvidence} className="flex items-center gap-2 text-neutral-500 hover:text-neutral-300 transition-colors text-xs tracking-widest">
+                <button onClick={closeEvidence} className="flex items-center gap-2 text-neutral-500 hover:text-neutral-300 transition-colors text-base tracking-widest">
                   <ArrowLeft className="w-4 h-4" /> VOLVER AL EXPEDIENTE
                 </button>
-                <span className="text-neutral-600 text-xs tracking-[0.2em]">
+                <span className="text-neutral-600 text-base tracking-[0.2em]">
                   CASO #{activeCase} — {cases.find(c => c.id === activeCase)?.title}
                 </span>
               </div>
@@ -1840,46 +1839,41 @@ export default function Home() {
                   className="w-full max-w-2xl"
                 >
                   <div className="bg-[#f4f1ea] border border-neutral-300 shadow-lg p-8 relative">
-                    <div className="absolute top-4 right-4 border-2 border-red-800 text-red-800 font-bold px-2 py-1 text-xs rotate-6 opacity-80 tracking-widest">
+                    <div className="absolute top-4 right-4 border-2 border-red-800 text-red-800 font-bold px-2 py-1 text-base rotate-6 opacity-80 tracking-widest">
                       VEREDICTO FINAL
                     </div>
                     <div className="border-b-2 border-neutral-800 pb-4 mb-6">
                       <p className="text-neutral-500 text-[10px] tracking-[0.3em] mb-1">RESOLUCIÓN DEL CASO</p>
-                      <h2 className="text-xl font-bold text-neutral-800 tracking-widest">07: EL VEREDICTO</h2>
+                      <h2 className="text-2xl font-bold text-neutral-800 tracking-widest">07: EL VEREDICTO</h2>
                     </div>
-                    <div className="space-y-4 text-sm text-neutral-700 leading-relaxed">
-                      <p>
-                        Excelentísima Corte Policarpier
+                    <div className="space-y-4 text-base text-neutral-700 leading-relaxed [&>p]:text-justify [&>p.text-center]:text-center">
+                      <p className="text-center font-semibold">Excelentísima Corte Policarpier</p>
 
-Vistos: Se inicia la investigación en el marco del expediente REG-2026/102076, seguido en contra del imputado, director de fotografía y streamer, Pol Turrents, más conocido en las redes sociales bajo su seudónimo “Polispol” acusado de diversos delitos digitales.
+                      <p><span className="font-semibold">Vistos:</span> Se inicia la investigación en el marco del expediente REG-2026/102076, seguido en contra del imputado, director de fotografía y streamer, Pol Turrents, más conocido en las redes sociales bajo su seudónimo &quot;Polispol&quot; acusado de diversos delitos digitales.</p>
 
-Considerandos:
-1° Se le ha imputado los delitos de realizar críticas cinematográficas absurdas y funables, pérdida de la razón y conductas inadecuadas que van contra la moral y las buenas costumbres y alterar la comunidad. 
+                      <p className="font-semibold">Considerandos:</p>
 
-2° Que, durante la realización de este juicio, el acusado fue capaz de demostrar su capacidad de memoria, templanza y agudeza mental para cada etapa bajo presión y descifró fotogramas recortados de su propia autoría a pesar de los burdos intentos de trolleo.
+                      <p><span className="font-semibold">1°</span> Se le ha imputado los delitos de realizar críticas cinematográficas absurdas y funables, pérdida de la razón y conductas inadecuadas que van contra la moral y las buenas costumbres y alterar la comunidad.</p>
 
-3° Que, respecto a las pruebas de cargo presentadas, este tribunal estima que carecen de la fuerza probatoria suficiente para destruir la presunción de inocencia del encausado. Las piezas de este juicio han sido descontextualizadas y, en su mayoría, burdas maniobras de troleo que no logran superar el estándar legal de la duda razonable, habiendo sido completamente desvirtuadas por el ojo técnico y la memoria del imputado.
+                      <p><span className="font-semibold">2°</span> Que, durante la realización de este juicio, el acusado fue capaz de demostrar su capacidad de memoria, templanza y agudeza mental para cada etapa bajo presión y descifró fotogramas recortados de su propia autoría a pesar de los burdos intentos de trolleo.</p>
 
-Y teniendo presente, se resuelve:
+                      <p><span className="font-semibold">3°</span> Que, respecto a las pruebas de cargo presentadas, este tribunal estima que carecen de la fuerza probatoria suficiente para destruir la presunción de inocencia del encausado. Las piezas de este juicio han sido descontextualizadas y, en su mayoría, burdas maniobras de troleo que no logran superar el estándar legal de la duda razonable, habiendo sido completamente desvirtuadas por el ojo técnico y la memoria del imputado.</p>
 
-I. Se declara absuelto al imputado de todos los cargos y acusaciones formuladas en su contra en este procedimiento.
+                      <p className="font-semibold">Y teniendo presente, se resuelve:</p>
 
-II. Se compensa al encausado restituyendo su honor digital y sin dejar antecedentes en su hoja de vida cibernética. Además de que el chat lo apoye día a día en cada stream de 5 horas, le envíe subs, y dejen sus twitch prime.
+                      <p><span className="font-semibold">I.</span> Se declara absuelto al imputado de todos los cargos y acusaciones formuladas en su contra en este procedimiento.</p>
 
-III. Se ordena la liberación de los bienes e insumos retenidos en el contenedor físico (caja de seguridad) que se encuentra en su ubicación actual.
+                      <p><span className="font-semibold">II.</span> Se compensa al encausado restituyendo su honor digital y sin dejar antecedentes en su hoja de vida cibernética. Además de que el chat lo apoye día a día en cada stream de 5 horas, le envíe subs, y dejen sus twitch prime.</p>
 
-IV. Cúmplase la presente orden de libertad en el mundo real, comenzando a celebrar su cumpleaños desde este momento con su chat y moderadores. 
+                      <p><span className="font-semibold">III.</span> Se ordena la liberación de los bienes e insumos retenidos en el contenedor físico (caja de seguridad) que se encuentra en su ubicación actual.</p>
 
-[1976]
-Regístrese, notifíquese en el stream y archívese.
+                      <p><span className="font-semibold">IV.</span> Cúmplase la presente orden de libertad en el mundo real, comenzando a celebrar su cumpleaños desde este momento con su chat y moderadores.</p>
 
+                      <p className="text-center text-neutral-500 tracking-widest">[1976]</p>
 
+                      <p>Regístrese, notifíquese en el stream y archívese.</p>
 
-
-
-                                                  Excelentisimo Ministro Pochinki 
-
-                      </p>
+                      <p className="text-center font-semibold mt-6">Excelentísimo Ministro Pochinki</p>
                     </div>
                   </div>
                 </motion.div>
@@ -1905,16 +1899,16 @@ Regístrese, notifíquese en el stream y archívese.
                 >
                   {/* Agent letter — Day 4 */}
                   <div className="bg-[#f4f1ea] border border-neutral-300 shadow-lg p-8 relative">
-                    <div className="absolute top-4 right-4 border-2 border-red-800 text-red-800 font-bold px-2 py-1 text-xs rotate-6 opacity-80 tracking-widest">
+                    <div className="absolute top-4 right-4 border-2 border-red-800 text-red-800 font-bold px-2 py-1 text-base rotate-6 opacity-80 tracking-widest">
                       CONFIDENCIAL
                     </div>
 
                     <div className="border-b-2 border-neutral-800 pb-4 mb-6">
                       <p className="text-neutral-500 text-[10px] tracking-[0.3em] mb-1">PERFIL PSICOLÓGICO — AGENTE DE CAMPO</p>
-                      <h2 className="text-xl font-bold text-neutral-800 tracking-widest">ANÁLISIS DE COMPORTAMIENTO</h2>
+                      <h2 className="text-2xl font-bold text-neutral-800 tracking-widest">ANÁLISIS DE COMPORTAMIENTO</h2>
                     </div>
 
-                    <div className="space-y-4 text-sm text-neutral-700 leading-relaxed mb-8">
+                    <div className="space-y-4 text-base text-neutral-700 leading-relaxed mb-8">
                       <p>
                         MoniRapida realizo una ardua investigación en el archivo del sospechoso, allí encontro situaciones que generan alerta y deben ser identificadas.
                       </p>
@@ -1935,7 +1929,7 @@ Regístrese, notifíquese en el stream y archívese.
                         href="https://polispol.pages.dev/"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="bg-neutral-800 text-[#f4f1ea] px-6 py-2.5 text-xs tracking-[0.25em] hover:bg-neutral-700 transition-colors border border-neutral-700 shrink-0"
+                        className="bg-neutral-800 text-[#f4f1ea] px-6 py-2.5 text-base tracking-[0.25em] hover:bg-neutral-700 transition-colors border border-neutral-700 shrink-0"
                       >
                         ACCEDER A LA INVESTIGACIÓN →
                       </a>
@@ -1984,17 +1978,17 @@ Regístrese, notifíquese en el stream y archívese.
                         className={`bg-[#f4f1ea] border border-neutral-300 shadow-lg p-5 flex flex-col gap-3 ${paper.rotate}`}>
                         <div className="border-b border-neutral-400 pb-2 flex items-center gap-2">
                           <FileText className="w-4 h-4 text-neutral-600" />
-                          <span className="text-sm font-bold text-neutral-800 tracking-widest">{paper.title}</span>
+                          <span className="text-base font-bold text-neutral-800 tracking-widest">{paper.title}</span>
                         </div>
                         {paper.image ? (
                           <img src={paper.image} alt={paper.title} className="w-full h-28 object-cover" />
                         ) : (
                           <div className="bg-neutral-200 border border-dashed border-neutral-400 flex flex-col items-center justify-center gap-1 h-28">
                             <ImageIcon className="w-6 h-6 text-neutral-400" />
-                            <span className="text-neutral-400 text-xs tracking-widest">[ IMAGEN ]</span>
+                            <span className="text-neutral-400 text-base tracking-widest">[ IMAGEN ]</span>
                           </div>
                         )}
-                        <p className="text-xs text-neutral-600 leading-relaxed">{paper.text}</p>
+                        <p className="text-base text-neutral-600 leading-relaxed">{paper.text}</p>
                       </motion.div>
                     ))
                   }
@@ -2007,12 +2001,12 @@ Regístrese, notifíquese en el stream y archívese.
                 transition={{ duration: 0.4, delay: 0.35 }}
                 className="w-full max-w-2xl border border-neutral-700 bg-neutral-800/40 p-6"
               >
-                <p className="text-neutral-500 text-xs tracking-[0.25em] mb-1">RESOLUCIÓN</p>
+                <p className="text-neutral-500 text-base tracking-[0.25em] mb-1">RESOLUCIÓN</p>
                 <div className="w-full h-px bg-neutral-700 mb-4" />
 
                 {/* Case 1: choice game progress */}
                 {activeCase === 1 && !choiceFinished && (
-                  <p className="text-neutral-400 text-xs tracking-[0.1em] leading-relaxed mb-5">
+                  <p className="text-neutral-400 text-base tracking-[0.1em] leading-relaxed mb-5">
                     Completa las 10 rondas para revelar el código.
                   </p>
                 )}
@@ -2020,7 +2014,7 @@ Regístrese, notifíquese en el stream y archívese.
                 {/* Case 2: sentence reveal */}
                 {activeCase === 2 && (
                   <div className="mb-5">
-                    <p className="text-neutral-400 text-xs tracking-[0.1em] leading-relaxed mb-4">
+                    <p className="text-neutral-400 text-base tracking-[0.1em] leading-relaxed mb-4">
                       Completa el pasapalabras para revelar la frase. Cada error oculta una letra del mensaje.
                     </p>
                     {pasapalabraState.finished && (
@@ -2033,7 +2027,7 @@ Regístrese, notifíquese en el stream y archívese.
                             ) : (
                               <div
                                 key={key}
-                                className={`w-6 h-8 flex items-end justify-center pb-0.5 border-b-2 text-sm font-bold
+                                className={`w-6 h-8 flex items-end justify-center pb-0.5 border-b-2 text-base font-bold
                                   ${blank ? "border-red-600 text-red-700" : "border-neutral-500 text-neutral-100"}`}
                               >
                                 {blank ? "_" : ch}
@@ -2052,25 +2046,25 @@ Regístrese, notifíquese en el stream y archívese.
                 )}
 
                 {activeCase === 3 && !day3State.gameFinished && (
-                  <p className="text-neutral-400 text-xs tracking-[0.1em] leading-relaxed mb-5">
+                  <p className="text-neutral-400 text-base tracking-[0.1em] leading-relaxed mb-5">
                     Completa las 10 rondas para revelar el código del siguiente caso.
                   </p>
                 )}
 
                 {activeCase === 5 && !boomFinished && (
-                  <p className="text-neutral-400 text-xs tracking-[0.1em] leading-relaxed mb-5">
+                  <p className="text-neutral-400 text-base tracking-[0.1em] leading-relaxed mb-5">
                     Juega el Boom Party hasta que haya un ganador para revelar el código.
                   </p>
                 )}
 
                 {activeCase === 6 && !revealFinished && (
-                  <p className="text-neutral-400 text-xs tracking-[0.1em] leading-relaxed mb-5">
+                  <p className="text-neutral-400 text-base tracking-[0.1em] leading-relaxed mb-5">
                     Completa las 10 imágenes para revelar el código.
                   </p>
                 )}
 
                 {activeCase !== 1 && activeCase !== 2 && activeCase !== 3 && activeCase !== 5 && activeCase !== 6 && (
-                  <p className="text-neutral-400 text-xs tracking-[0.1em] leading-relaxed mb-5">
+                  <p className="text-neutral-400 text-base tracking-[0.1em] leading-relaxed mb-5">
                     Analiza las evidencias e ingresa el código descifrado para desbloquear el siguiente caso.
                   </p>
                 )}
@@ -2082,13 +2076,13 @@ Regístrese, notifíquese en el stream y archívese.
                       type="text"
                       value={codeInput}
                       onChange={e => { setCodeInput(e.target.value.toUpperCase()); setCodeStatus("idle"); }}
-                      className={`flex-1 bg-neutral-900 border border-neutral-600 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-neutral-400 uppercase placeholder:text-neutral-700 placeholder:normal-case placeholder:tracking-normal ${activeCase === 2 ? "tracking-wide" : "tracking-[0.3em]"}`}
+                      className={`flex-1 bg-neutral-900 border border-neutral-600 text-neutral-100 px-3 py-2 text-base focus:outline-none focus:border-neutral-400 uppercase placeholder:text-neutral-700 placeholder:normal-case placeholder:tracking-normal ${activeCase === 2 ? "tracking-wide" : "tracking-[0.3em]"}`}
                       placeholder="Ingresa el código"
                       maxLength={activeCase === 2 ? 80 : 50}
                     />
                     <button
                       type="submit"
-                      className="bg-neutral-700 text-neutral-200 px-5 py-2 text-xs tracking-[0.2em] hover:bg-neutral-600 transition-colors border border-neutral-600 hover:border-neutral-400 shrink-0"
+                      className="bg-neutral-700 text-neutral-200 px-5 py-2 text-base tracking-[0.2em] hover:bg-neutral-600 transition-colors border border-neutral-600 hover:border-neutral-400 shrink-0"
                     >
                       VERIFICAR
                     </button>
@@ -2096,7 +2090,7 @@ Regístrese, notifíquese en el stream y archívese.
                 ) : null}
 
                 {codeStatus === "error" && (
-                  <p className="mt-3 text-red-500 text-xs tracking-widest">✗ CÓDIGO INCORRECTO — Intenta de nuevo.</p>
+                  <p className="mt-3 text-red-500 text-base tracking-widest">✗ CÓDIGO INCORRECTO — Intenta de nuevo.</p>
                 )}
 
                 {codeStatus === "success" && (
@@ -2105,9 +2099,9 @@ Regístrese, notifíquese en el stream y archívese.
                       <>
                         <div className="flex items-center gap-2 text-green-500">
                           <CheckCircle2 className="w-4 h-4" />
-                          <span className="text-xs tracking-widest">INVESTIGACIÓN COMPLETADA — Todos los casos han sido resueltos.</span>
+                          <span className="text-base tracking-widest">INVESTIGACIÓN COMPLETADA — Todos los casos han sido resueltos.</span>
                         </div>
-                        <button onClick={closeEvidence} className="w-full bg-neutral-700 text-neutral-200 py-2 text-xs tracking-[0.2em] hover:bg-neutral-600 transition-colors border border-neutral-600">
+                        <button onClick={closeEvidence} className="w-full bg-neutral-700 text-neutral-200 py-2 text-base tracking-[0.2em] hover:bg-neutral-600 transition-colors border border-neutral-600">
                           VOLVER AL ARCHIVO
                         </button>
                       </>
@@ -2115,9 +2109,9 @@ Regístrese, notifíquese en el stream y archívese.
                       <>
                         <div className="flex items-center gap-2 text-green-500">
                           <CheckCircle2 className="w-4 h-4" />
-                          <span className="text-xs tracking-widest">CÓDIGO CORRECTO — CASO #{activeCase + 1} DESBLOQUEADO.</span>
+                          <span className="text-base tracking-widest">CÓDIGO CORRECTO — CASO #{activeCase + 1} DESBLOQUEADO.</span>
                         </div>
-                        <button onClick={closeEvidence} className="w-full bg-neutral-700 text-neutral-200 py-2 text-xs tracking-[0.2em] hover:bg-neutral-600 transition-colors border border-neutral-600">
+                        <button onClick={closeEvidence} className="w-full bg-neutral-700 text-neutral-200 py-2 text-base tracking-[0.2em] hover:bg-neutral-600 transition-colors border border-neutral-600">
                           IR AL CASO #{activeCase + 1}
                         </button>
                       </>
