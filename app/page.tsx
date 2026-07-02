@@ -11,12 +11,7 @@ import { Lock, FileText, Shield, ArrowLeft, ImageIcon, CheckCircle2 } from "luci
 type LoginView = "login" | "register" | "forgot";
 type CodeStatus = "idle" | "error" | "success";
 
-type WordleState = {
-  guesses: string[];
-  currentInput: string;
-  won: boolean;
-  lost: boolean;
-};
+type ChoiceRound = { label: string; phrase: string; images: [string, string, string]; correctIdx: number; revealText: string };
 
 type LetterStatus = "pending" | "correct" | "incorrect";
 
@@ -52,29 +47,33 @@ type BoomPhase = "waiting" | "playing" | "roundOver" | "finished";
 type BoomPlayer = { name: string; eliminated: boolean; score: number };
 type BoomQuestion = { text: string; answer: string };
 
+type RevealRound = { questionImage: string; revealImage: string; answer: string; label: string };
+
 // ─────────────────────────────────────────────────────────────────
 // Static data
 // ─────────────────────────────────────────────────────────────────
 
-const MAX_WORDLE_GUESSES = 5;
-
 const cases = [
-  { id: 1, title: "01: El Comienzo", code: "INICIO" },
-  { id: 2, title: "02: Vida", code: "SER BUENOS Y SI SON MALOS VIENEN AL CHAT O AL DISCORD Y ME LO CUENTAN" },
-  { id: 3, title: "03: Detalle", code: "RASTRO" },
-  { id: 4, title: "04: La Trampa", code: "BIENVENIDOS A ESTA SANTA CASA" },
-  { id: 5, title: "05: Los Imitadores", code: "ORIGINAL" },
-  { id: 6, title: "06: La Verdad", code: "LIMA" },
-  { id: 7, title: "07: El Veredicto", code: "FINIS" },
+  { id: 1, title: "01: Delitos digitales", code: "JUICIO" },
+  { id: 2, title: "02: Interrogatorio a presión", code: "SER BUENOS Y SI SON MALOS VIENEN AL CHAT O AL DISCORD Y ME LO CUENTAN" },
+  { id: 3, title: "03: Informe de inteligencia visual", code: "RASTRO" },
+  { id: 4, title: "04: Expediente de evaluación conductual fonética", code: "BIENVENIDOS A ESTA SANTA CASA" },
+  { id: 5, title: "05: Sabotaje bajo presión", code: "ORIGINAL" },
+  { id: 6, title: "06: Prueba forense visual", code: "SABIDURIA" },
+  { id: 7, title: "07: Liberación de cargos", code: "CUMPLEPOL" },
 ];
 
-const case2Words = [
-  { label: "EVIDENCIA 1", word: "ACEITUNAS", fragment: "I", rotate: "-rotate-2", clue: "Hemos encontrado un alimento que el sospechoso ama comer" },
-  { label: "EVIDENCIA 2", word: "VENTILADOR", fragment: "N", rotate: "rotate-1", clue: "El sospechoso olvida sus rutinas y antes de su aparición en público debería tenerlo encendido" },
-  { label: "EVIDENCIA 3", word: "CAMPANADAS", fragment: "I", rotate: "rotate-2", clue: "El sospechoso se reune con su comunidad siempre en esta fecha para celebrar" },
-  { label: "EVIDENCIA 4", word: "MARIACHIS", fragment: "C", rotate: "-rotate-1", clue: "En una ocasión lo visitaron en su casa" },
-  { label: "EVIDENCIA 5", word: "AURONPLAY", fragment: "I", rotate: "rotate-1.5", clue: "En reiteradas ocasiones se ha visto al sospechoso compartiendo con este personaje" },
-  { label: "EVIDENCIA 6", word: "TURRENTS", fragment: "O", rotate: "-rotate-1", clue: "Es una de las maneras de identificar al sospechoso" },
+const choiceRounds: ChoiceRound[] = [
+  { label: "RONDA 1",  phrase: "'Probablemente tenga las peores canciones de un p*to musical de toda la historia del cine'",  images: ["day1/r01_a.jpg", "day1/r01_b.jpg", "day1/r01_c.jpg"], correctIdx: 0, revealText: "Me han invitado de manera muy amable y casual a expresar mi sincera opinión sobre esta película. Llevo un rato intentando plasmar lo que quiero decir, pero no encuentro las palabras adecuadas. Y no se si fue la madre de bambi o el conejo tambor que dijo eso de ‘si no tienes algo mas bonito que decir que el silencio calla la p*ta boca y no digas nada’. Así que voy a aplicarme el cuento y no decir nadBUENO YA QUE ESTAMOS VOY A DECIR LO MEJOR DE EMILIA PÉREZ. no voy a hablar mal de esta ponzoña que destroza mis neuronas ni comentar que probablemente tenga las peores canciones de un p*to musical de toda la historia del cine. Y os voy a contar lo mejor de emilia pérez. Y es que cuando fuí al cine, al salir, me encontré una moneda de 10 centimos tirada en el parking del centro comercial. Y joder, pues algo bueno tuvo que tener salir a ver esta porqueria."  },
+  { label: "RONDA 2",  phrase: "'I've just saved you 9 hours of your life'",  images: ["day1/r02_a.jpg", "day1/r02_b.jpg", "day1/r02_c.jpg"], correctIdx: 1, revealText: "A guy. Walks. More walks. More guys (with hairy feet) MORE WALK. Then Trees. They also WALK. A RING. MY PRECIOUS. CHOF. THE END. I've just saved you 9 hours of your life. You're welcome. It's like the camino of santiago, but in drugs."  },
+  { label: "RONDA 3",  phrase: "'Al menos en la de disney cantan'",  images: ["day1/r03_a.jpg", "day1/r03_b.jpg", "day1/r03_c.jpg"], correctIdx: 0, revealText: "Es Pocahontas MAL. Al menos en la de disney cantan (mucho). TODO MAL. Los bichos, MAL. Parecen pitufos jugadores de basket borrachos. La historia, MAL. No se como van a hacer mas pelis de esto. MAL. El 3D bien, pero dónde vemos 3D en el año 2021 si ya no hay cines ni teles, que esta peli nació obsoleta, joder. MAL. No hablaremos del tema colas y lo turbia que se pone la cosa. MAL. Lo único que salvaría es la banda sonora, porque el compositor tiene obras maestras y por no hacerle un feo. Por el resto, MAL. Cameron deja esto y haznos Titanic 2 (esta vez con tablas mas grandes)."  },
+  { label: "RONDA 4",  phrase: "'Pero mas largo es el mariana, y bien que nos gusta'",  images: ["day1/r04_a.jpg", "day1/r04_b.jpg", "day1/r04_c.jpg"], correctIdx: 2, revealText: "Esta peli es la hostia. Scorsese es la hostia. Los actores son la hostia. Todo es la hostia, hostia. A ver, no os voy a engañar, es un poco larga, pero mas largo es el mariana, y bien que nos gusta. Mafiosos, gangsters y movidas de esas que tanto me gustan. Eso si, menuda mierda el rejuvenecimiento digital. Da mas cringe que leticia sabater vestida de mamá noel. Pero por el resto es la HOSTIA."  },
+  { label: "RONDA 5",  phrase: "'A mi me sienta como una patada en la webera'",  images: ["day1/r05_a.jpg", "day1/r05_b.jpg", "day1/r05_c.jpg"], correctIdx: 1, revealText: "Si pienso en navidad, pienso en esta película. Pero también te digo que si pienso en navidad, a mi me sienta como una patada en la webera, cosa que no pasa con este film, que me toca la patata (alias el corasón) amablemente. Que bonita, que alegría, que alboroto, le ha tocado un perrito piloto con la peli. Me encanta. Me pondría en la puerta de Richard Curtis (director) con carteles en los brazos agradeciéndole esta pequeña joya. Un montón de historias cruzadas y mas liadas que el poco pelo que me queda. Os va a encantar. Si la veis en agosto, cuidao, que sale gente muy abrigada y lo mismo os da un sofoco por empatía."  },
+  { label: "RONDA 6",  phrase: "'Prefiero que una piraña me corte las uñas de los pies'",  images: ["day1/r06_a.jpg", "day1/r06_b.jpg", "day1/r06_c.jpg"], correctIdx: 0, revealText: "Ay dios mio. Adam, con lo majete que pareces, y las pelis con las que nos torturas a veces. En este film, Sandler hace el papel de un tipo que merece que le golpeen en la cara con un calcetín sucio y sudado (bueno, en este film y en unos cuantos). Es un menda que dios (o quien sea) baja y le da un mando para poder pausar su vida, o acelerarla, o cambiar de idioma. La idea es estúpida, pero la película aún lo es mas. Prefiero que una piraña me corte las uñas de los pies, antes que volverla a sufrir. TODO MAL. Podemos hablar del pelo de Adam Sandler? mirad el poster por dios. Es que incluso eso no es lo peor del film. Y el diseño del mando? si parece un calzador. Que pereza tener que pensar en esta peli, por dios, no os gastéis los puntos de canal en esto. Por decir algo positivo del film: vi la película en un cine muy cómodo y me dormí un rato."  },
+  { label: "RONDA 7",  phrase: "'He tenido ataques de tos con pus en la garganta'",  images: ["day1/r07_a.jpg", "day1/r07_b.jpg", "day1/r07_c.jpg"], correctIdx: 1, revealText: "Alguna mente avispada de un estudio de hollywood se debió levantar por la mañana en plena resaca pensando 'Joder, cuando yo tenía 21 años me tomaba 4 whiskys y jugaba toda la noche al pacman y al día siguiente estaba como una rosa'. Y de golpe en plena resaca pensó 'ostia, hagamos una peli del pacman que seguro que le mola a la chavalada'. Pues amigo, mala idea. Es una peli de boomers creyendo que mola ser boomer y restregarle a la juventud actual que tienes un humor de mierda, anclado en los 80 y te has dedicado a destrozar todo videojuego icónico de cuando tenías una vida interesante. La peli no es mala, ES PEOR. En serio, he tenido ataques de tos con pus en la garganta mas agradables que sufrir esta ponzoña que adormece las neuronas. Pacman, sal de ahí, por favor te lo pido. Esta peli solo podría empeorar si cuando vas al cine a verla, en las palomitas te ponen piña, como si fuera una pizza con piña de mierda. No tiene pinta de que vayan a hacer una segunda parte, pero si lo hacen, por favor, mandadles esta crítica para persuadirles."  },
+  { label: "RONDA 8",  phrase: "'Pornografía emocional barata'",  images: ["day1/r08_a.jpg", "day1/r08_b.jpg", "day1/r08_c.jpg"], correctIdx: 2, revealText: "Esperaba ver Cosmos y me encuentro con sálvame. Una de las mentes mas fascinantes del siglo y se centran en quién se acuesta con su mujer. En serio? Por el resto, pornografía emocional barata. Lagrimilla de garrafón y con una fotografía que parece hecha en instagram NO."  },
+  { label: "RONDA 9",  phrase: "'No puedo dar menos de media estrella?'",  images: ["day1/r09_a.jpg", "day1/r09_b.jpg", "day1/r09_c.jpg"], correctIdx: 1, revealText: "en serio? no puedo dar menos de media estrella?"  },
+  { label: "RONDA 10", phrase: "'Un plagio de muchas películas con un final de vergüenza'", images: ["day1/r10_a.jpg", "day1/r10_b.jpg", "day1/r10_c.jpg"], correctIdx: 0, revealText: "Sobrevaloradisima. Un plagio de muchas películas con un final de vergüenza ajena. Nenes, tenéis que ver mas ciencia ficción clásica, eh?" },
 ];
 
 const PASAPALABRA_SENTENCE = "SER BUENOS Y SI SON MALOS VIENEN AL CHAT O AL DISCORD Y ME LO CUENTAN";
@@ -147,8 +146,22 @@ const day3Rounds: Day3RoundData[] = [
   { images: ["day3/r10_1.jpg", "day3/r10_2.jpg", "day3/r10_3.jpg", "day3/r10_4.jpg"], word: "Stream" },
 ];
 
-const MAX_BOOM_PLAYERS = 3;
+const revealRounds: RevealRound[] = [
+  { label: "IMAGEN 01", questionImage: "day6/q08.jpg", revealImage: "day6/r08.jpg", answer: "Serie B" },
+  { label: "IMAGEN 02", questionImage: "day6/q06.jpg", revealImage: "day6/r06.jpg", answer: "Wicked" },
+  { label: "IMAGEN 03", questionImage: "day6/q03.jpg", revealImage: "day6/r03.jpg", answer: "Todo volvera a ser como antes" },
+  { label: "IMAGEN 04", questionImage: "day6/q04.jpg", revealImage: "day6/r04.jpg", answer: "Emilia Turrents" },
+  { label: "IMAGEN 05", questionImage: "day6/q05.jpg", revealImage: "day6/r05.jpg", answer: "Avatar" },
+  { label: "IMAGEN 06", questionImage: "day6/q02.jpg", revealImage: "day6/r02.jpg", answer: "Saturno" },
+  { label: "IMAGEN 07", questionImage: "day6/q07.jpg", revealImage: "day6/r07.jpg", answer: "Amor Bilateral" },
+  { label: "IMAGEN 08", questionImage: "day6/q01.jpg", revealImage: "day6/r01.jpg", answer: "El debito" },
+  { label: "IMAGEN 09", questionImage: "day6/q09.jpg", revealImage: "day6/r09.jpg", answer: "Blanco Buenos Aires" },
+  { label: "IMAGEN 10", questionImage: "day6/q10.jpg", revealImage: "day6/r10.jpg", answer: "Moderat" },
+];
+
+const MAX_BOOM_PLAYERS = 6;
 const TOTAL_ROUNDS = 3;
+const BOOM_ROUND_WORDS = ["!imitador", "!falsificador", "!parodiador"];
 const BOOM_CIRCLE_SIZE = 340;
 const BOOM_CIRCLE_CENTER = BOOM_CIRCLE_SIZE / 2;
 const BOOM_CIRCLE_RADIUS = 140;
@@ -170,7 +183,7 @@ const BOOM_QUESTIONS: BoomQuestion[] = [
   { text: "¿Cuál es el nombre del cuervo favorito de Pol?", answer: "FOCUS" },
   { text: "¿Qué tiene Pol pegado en el techo del setup?", answer: "MANOS LOCAS" },
   { text: "¿Qué animal es Trufa?", answer: "GATO" },
-  { text: "¿Cuál fue la primera receta con VdeBikingo?", answer: "ESPAGUETIS" },
+  { text: "¿Cuál fue la primera receta con VdeBikingo?", answer: "PASTA" },
   { text: "¿Qué se pone Pol por puntos del canal?", answer: "PELUCA" },
   { text: "¿Cuál es el grito cuando alguien se suscribe?", answer: "COWABUNGA" },
   { text: "¿Cómo empieza la canción de inicio del stream?", answer: "TIME" },
@@ -195,7 +208,7 @@ const BOOM_QUESTIONS: BoomQuestion[] = [
   { text: "¿Que artista le escribio una canción a Pol?", answer: "PEP SALA" },
   { text: "¿Nombre del canción que Pep Sala le escribio a Pol?", answer: "NÚVOLS DE COLOR" },
   { text: "¿Con que pelicula nominaron a Pol a \"mejor dirección de fotografía en los premios Gaudí\"?", answer: "XTREMS" },
-  { text: "¿Moderadora Chilena del canal de Polispol?", answer: "SUUGGIE" },
+  { text: "¿Persona que le dice Espabila a Pol?", answer: "SUUGGIE" },
   { text: "¿Genia creativa detras de los emotes y badges de Polispol?", answer: "CABRUU" },
   { text: "¿Nombre del bloc de Pol donde nos habla de Fotografía?", answer: "DIRECTORDEFOTOGRAFIA" },
   { text: "¿Nombre del cine favorito de Pol?", answer: "PHENOMENA" },
@@ -267,21 +280,6 @@ function getNextPendingIdx(states: LetterStatus[], from: number): number {
   return -1;
 }
 
-function getLetterStates(guess: string, target: string): ("correct" | "present" | "absent")[] {
-  const result: ("correct" | "present" | "absent")[] = Array(guess.length).fill("absent");
-  const targetUsed = Array(target.length).fill(false);
-
-  for (let i = 0; i < guess.length; i++) {
-    if (guess[i] === target[i]) { result[i] = "correct"; targetUsed[i] = true; }
-  }
-  for (let i = 0; i < guess.length; i++) {
-    if (result[i] === "correct") continue;
-    for (let j = 0; j < target.length; j++) {
-      if (!targetUsed[j] && guess[i] === target[j]) { result[i] = "present"; targetUsed[j] = true; break; }
-    }
-  }
-  return result;
-}
 
 // ─────────────────────────────────────────────────────────────────
 // PasapalabraGame component
@@ -665,7 +663,7 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
   const [currentIdx, setCurrentIdx] = useState(0);
   const [question, setQuestion] = useState<BoomQuestion | null>(null);
   const [usedQIdxs, setUsedQIdxs] = useState<number[]>([]);
-  const [timeLeft, setTimeLeft] = useState(7);
+  const [timeLeft, setTimeLeft] = useState(14);
   const [roundWinner, setRoundWinner] = useState<string | null>(null);
   const [chatMsgs, setChatMsgs] = useState<{ id: number; user: string; text: string; highlight: boolean }[]>([]);
   const [connected, setConnected] = useState(false);
@@ -677,17 +675,19 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
   const currentIdxRef = useRef(0);
   const questionRef = useRef<BoomQuestion | null>(null);
   const usedQIdxsRef = useRef<number[]>([]);
-  const onFinishRef = useRef(onFinish);
+  const onFinishRef    = useRef(onFinish);
+  const roundWordRef   = useRef(BOOM_ROUND_WORDS[0]);
 
-  phaseRef.current = phase;
-  playersRef.current = players;
+  phaseRef.current    = phase;
+  playersRef.current  = players;
   currentIdxRef.current = currentIdx;
   questionRef.current = question;
   usedQIdxsRef.current = usedQIdxs;
-  onFinishRef.current = onFinish;
+  onFinishRef.current  = onFinish;
+  roundWordRef.current = BOOM_ROUND_WORDS[(roundNumber - 1) % BOOM_ROUND_WORDS.length];
 
-  function timerFor(idx: number, arr: BoomPlayer[]): number {
-    return arr[idx]?.name.toLowerCase() === username.toLowerCase() ? 7 : 8;
+  function timerFor(): number {
+    return 10;
   }
 
   function pickQuestion(used: number[]): { q: BoomQuestion; qIdx: number } {
@@ -729,7 +729,7 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
     setUsedQIdxs(prev => [...prev, qIdx]);
     setQuestion(q);
     setCurrentIdx(next);
-    setTimeLeft(timerFor(next, updatedPlayers));
+    setTimeLeft(timerFor());
     setPlayers(updatedPlayers);
   }
 
@@ -814,7 +814,7 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
       ).toLowerCase();
 
       if (phaseRef.current === "waiting") {
-        if (text.toLowerCase() === "!imitador") {
+        if (text.toLowerCase() === roundWordRef.current.toLowerCase()) {
           setPlayers(prev => {
             if (prev.length >= MAX_BOOM_PLAYERS) return prev;
             if (prev.some(p => p.name.toLowerCase() === user)) return prev;
@@ -871,7 +871,7 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
           <div className="bg-neutral-800/40 border border-neutral-700 p-4">
             <p className="text-neutral-400 text-xs tracking-widest mb-3">
               Los primeros <span className="text-amber-400 font-bold">{MAX_BOOM_PLAYERS}</span> en escribir{" "}
-              <span className="text-amber-400 font-bold">!imitador</span> en el chat participarán en la ronda {roundNumber}.
+              <span className="text-amber-400 font-bold">{BOOM_ROUND_WORDS[(roundNumber - 1) % BOOM_ROUND_WORDS.length]}</span> en el chat participarán en la ronda {roundNumber}.
             </p>
             <div className="flex flex-wrap gap-2 min-h-[32px]">
               {players.map((p, i) => (
@@ -891,7 +891,7 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
               setQuestion(q);
               setUsedQIdxs([qIdx]);
               setCurrentIdx(0);
-              setTimeLeft(timerFor(0, players));
+              setTimeLeft(timerFor());
               setPhase("playing");
             }}
             disabled={players.length < 2}
@@ -1074,106 +1074,247 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
 }
 
 // ─────────────────────────────────────────────────────────────────
-// WordlePaper component (state is lifted to Home to persist navigation)
+// RevealGame — image-guess sequence (Day 6)
 // ─────────────────────────────────────────────────────────────────
 
-function WordlePaper({
-  label, word, fragment, rotate, clue, state, onInput, onSubmit,
-}: {
-  label: string; word: string; fragment: string; rotate: string; clue?: string;
-  state: WordleState;
-  onInput: (v: string) => void;
-  onSubmit: () => void;
-}) {
-  const CELL = 28;
-  const GAP = 2;
+function RevealGame({ onFinish }: { onFinish: () => void }) {
+  const [roundIdx,  setRoundIdx]  = useState(0);
+  const [input,     setInput]     = useState("");
+  const [revealed,  setRevealed]  = useState(false);
+  const [finished,  setFinished]  = useState(false);
+
+  const round   = revealRounds[roundIdx];
+  const isLast  = roundIdx === revealRounds.length - 1;
+  const correct = normalizeAnswer(input) === normalizeAnswer(round.answer);
+
+  function handleSubmit(e: React.SyntheticEvent) {
+    e.preventDefault();
+    if (!input.trim()) return;
+    setRevealed(true);
+  }
+
+  function handleNext() {
+    if (isLast) { setFinished(true); return; }
+    setRoundIdx(i => i + 1);
+    setInput("");
+    setRevealed(false);
+  }
+
+  if (finished) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-xl flex flex-col gap-4"
+      >
+        <div className="border border-neutral-600 bg-neutral-800/40 p-6 text-center">
+          <p className="text-[10px] tracking-widest text-neutral-500 mb-2">SECUENCIA COMPLETADA — {revealRounds.length} IMÁGENES</p>
+          <p className="text-neutral-400 text-sm mb-4">Ingresa el código para continuar.</p>
+          <p className="text-amber-500/70 text-xs tracking-[0.3em]">
+            PALABRA CLAVE: <span className="text-amber-400 font-bold">SABIDURIA</span>
+          </p>
+        </div>
+        <button
+          onClick={onFinish}
+          className="w-full bg-neutral-800 text-neutral-100 py-3 text-sm tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-600"
+        >
+          CONTINUAR →
+        </button>
+      </motion.div>
+    );
+  }
 
   return (
-    <div className={`bg-[#f4f1ea] border border-neutral-300 shadow-lg p-4 flex flex-col gap-3 ${rotate}`}>
-      <div className="border-b border-neutral-400 pb-2 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <FileText className="w-4 h-4 text-neutral-600" />
-          <span className="text-xs font-bold text-neutral-800 tracking-widest">{label}</span>
-        </div>
-        {state.won && (
-          <span className="text-sm font-bold text-green-700 border border-green-600 px-2 tracking-widest">
-            {fragment}
-          </span>
-        )}
+    <div className="w-full max-w-xl flex flex-col gap-5">
+
+      {/* Progress */}
+      <div className="flex items-center justify-between text-[10px] tracking-widest text-neutral-500">
+        <span>{round.label}</span>
+        <span>{roundIdx + 1} / {revealRounds.length}</span>
       </div>
 
-      {clue && (
-        <div className="bg-neutral-100 border border-neutral-300 px-3 py-2">
-          <p className="text-[10px] text-neutral-500 tracking-widest mb-0.5">PISTA</p>
-          <p className="text-xs text-neutral-700 leading-relaxed">{clue}</p>
+      {/* Question image */}
+      {!revealed && (
+        <div className="w-full aspect-video bg-neutral-800 border border-neutral-700 overflow-hidden flex items-center justify-center">
+          <img
+            src={round.questionImage}
+            alt={round.label}
+            className="w-full h-full object-cover"
+            onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+          />
         </div>
       )}
 
-      <div className="flex flex-col" style={{ gap: GAP }}>
-        {Array.from({ length: MAX_WORDLE_GUESSES }).map((_, rowIdx) => {
-          const submitted = state.guesses[rowIdx];
-          const isActive = rowIdx === state.guesses.length && !state.won && !state.lost;
-          const letters = submitted
-            ? submitted.split("")
-            : isActive
-              ? Array.from({ length: word.length }, (_, i) => state.currentInput[i] ?? "")
-              : Array(word.length).fill("");
-          const states = submitted ? getLetterStates(submitted, word) : null;
+      {/* Reveal image */}
+      {revealed && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
+          className="w-full bg-neutral-800 border border-neutral-600 overflow-hidden flex flex-col items-center"
+        >
+          <img
+            src={round.revealImage}
+            alt={`Resultado: ${round.answer}`}
+            className="w-full object-contain max-h-[55vh]"
+            onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+          />
+          <div className="w-full px-4 py-3 flex items-center justify-between border-t border-neutral-700">
+            <span className="text-[10px] tracking-widest text-neutral-500">RESPUESTA</span>
+            <span className={`text-sm font-bold tracking-wider ${correct ? "text-green-400" : "text-amber-400"}`}>
+              {round.answer.toUpperCase()}
+            </span>
+          </div>
+        </motion.div>
+      )}
 
+      {/* Input */}
+      {!revealed && (
+        <form onSubmit={handleSubmit} className="flex gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            className="flex-1 bg-neutral-900 border border-neutral-600 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-neutral-400 placeholder:text-neutral-600 uppercase"
+            placeholder="¿Qué ves en la imagen?"
+            autoComplete="off"
+            autoFocus
+          />
+          <button
+            type="submit"
+            disabled={!input.trim()}
+            className="bg-neutral-800 text-neutral-100 px-4 py-2 text-xs tracking-[0.2em] hover:bg-neutral-700 transition-colors border border-neutral-600 disabled:opacity-30"
+          >
+            REVELAR
+          </button>
+        </form>
+      )}
+
+      {/* Next */}
+      {revealed && (
+        <button
+          onClick={handleNext}
+          className="w-full bg-neutral-800 text-neutral-100 py-3 text-sm tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-600"
+        >
+          {isLast ? "FINALIZAR →" : "SIGUIENTE →"}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// ChoiceGame — image-choice game (Day 1)
+// ─────────────────────────────────────────────────────────────────
+
+function ChoiceGame({ onFinish }: { onFinish: () => void }) {
+  const [roundIdx,  setRoundIdx]  = useState(0);
+  const [wrong,     setWrong]     = useState<number | null>(null);
+  const [solved,    setSolved]    = useState(false);
+  const [finished,  setFinished]  = useState(false);
+
+  const round  = choiceRounds[roundIdx];
+  const isLast = roundIdx === choiceRounds.length - 1;
+
+  function handleSelect(i: number) {
+    if (solved) return;
+    if (i === round.correctIdx) { setSolved(true); setWrong(null); }
+    else setWrong(i);
+  }
+
+  function handleNext() {
+    if (isLast) { setFinished(true); return; }
+    setRoundIdx(i => i + 1);
+    setWrong(null);
+    setSolved(false);
+  }
+
+  if (finished) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-2xl flex flex-col gap-4"
+      >
+        <div className="border border-neutral-600 bg-neutral-800/40 p-6 text-center">
+          <p className="text-[10px] tracking-widest text-neutral-500 mb-2">SECUENCIA COMPLETADA — {choiceRounds.length} RONDAS</p>
+          <p className="text-neutral-400 text-sm mb-4">Ingresa el código para continuar.</p>
+          <p className="text-amber-500/70 text-xs tracking-[0.3em]">
+            CÓDIGO: <span className="text-amber-400 font-bold">JUICIO</span>
+          </p>
+        </div>
+        <button
+          onClick={onFinish}
+          className="w-full bg-neutral-800 text-neutral-100 py-3 text-sm tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-600"
+        >
+          CONTINUAR →
+        </button>
+      </motion.div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-2xl flex flex-col gap-4">
+
+      {/* Progress */}
+      <div className="flex items-center justify-between text-[10px] tracking-widest text-neutral-500">
+        <span>{round.label}</span>
+        <span>{roundIdx + 1} / {choiceRounds.length}</span>
+      </div>
+
+      {/* Phrase — above the images */}
+      <p className="text-sm text-neutral-200 leading-relaxed text-center tracking-wide border border-neutral-700 bg-neutral-800/40 px-4 py-3">
+        {round.phrase}
+      </p>
+
+      {/* 3 image buttons */}
+      <div className="grid grid-cols-3 gap-4">
+        {round.images.map((img, i) => {
+          const isWrong   = wrong === i;
+          const isCorrect = solved && i === round.correctIdx;
           return (
-            <div key={rowIdx} className="flex" style={{ gap: GAP }}>
-              {Array.from({ length: word.length }).map((_, colIdx) => {
-                const letter = letters[colIdx] ?? "";
-                const st = states?.[colIdx];
-                return (
-                  <div
-                    key={colIdx}
-                    style={{ width: CELL, height: CELL }}
-                    className={`flex items-center justify-center text-[10px] font-bold border select-none
-                      ${st === "correct" ? "bg-green-600  border-green-600  text-white"
-                        : st === "present" ? "bg-yellow-500 border-yellow-500 text-white"
-                          : st === "absent" ? "bg-neutral-500 border-neutral-500 text-white"
-                            : letter ? "border-neutral-500 text-neutral-800"
-                              : "border-neutral-300"}`}
-                  >
-                    {letter}
-                  </div>
-                );
-              })}
-            </div>
+            <button
+              key={i}
+              onClick={() => handleSelect(i)}
+              disabled={solved}
+              className={`w-full border p-1 transition-colors focus:outline-none
+                ${isCorrect ? "border-green-500 bg-green-950/30"
+                  : isWrong  ? "border-red-500 bg-red-950/30"
+                  : "border-neutral-600 bg-neutral-800/40 hover:border-neutral-400 hover:bg-neutral-700/40"}`}
+            >
+              <div className="w-full overflow-hidden">
+                <img
+                  src={img}
+                  alt={`Opción ${i + 1}`}
+                  className="w-full h-auto block"
+                  onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+              </div>
+            </button>
           );
         })}
       </div>
 
-      {!state.won && !state.lost ? (
-        <form onSubmit={e => { e.preventDefault(); onSubmit(); }} className="flex gap-2 mt-1">
-          <input
-            type="text"
-            value={state.currentInput}
-            onChange={e =>
-              onInput(e.target.value.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, word.length))
-            }
-            className="flex-1 min-w-0 bg-white border border-neutral-400 text-neutral-800 px-2 py-1 text-xs tracking-[0.15em] uppercase focus:outline-none focus:border-neutral-600"
-            placeholder={`${word.length} letras`}
-          />
+      {/* Reveal panel — appears after correct selection */}
+      {solved && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col gap-3"
+        >
+          <div className="w-full bg-neutral-800 border border-green-700 overflow-hidden">
+            <img
+              src={round.images[round.correctIdx]}
+              alt="Respuesta correcta"
+              className="w-full h-auto block"
+              onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
+            />
+          </div>
+          <div className="border border-neutral-700 bg-neutral-800/40 px-4 py-3">
+            <p className="text-sm text-neutral-300 leading-relaxed">{round.revealText}</p>
+          </div>
           <button
-            type="submit"
-            disabled={state.currentInput.length !== word.length}
-            className="bg-neutral-800 text-white px-3 py-1 text-xs hover:bg-neutral-700 transition-colors disabled:opacity-40 shrink-0"
+            onClick={handleNext}
+            className="w-full bg-neutral-800 text-neutral-100 py-3 text-sm tracking-[0.3em] hover:bg-neutral-700 transition-colors border border-neutral-600"
           >
-            ↵
+            {isLast ? "FINALIZAR →" : "SIGUIENTE →"}
           </button>
-        </form>
-      ) : state.won ? (
-        <div className="bg-green-50 border border-green-300 p-2 text-center">
-          <p className="text-green-700 text-xs font-bold tracking-widest">¡DESCIFRADO!</p>
-          <p className="text-2xl font-bold text-green-600 mt-1">{fragment}</p>
-        </div>
-      ) : (
-        <div className="bg-red-50 border border-red-300 p-2 text-center">
-          <p className="text-red-600 text-xs tracking-widest">INTENTOS AGOTADOS</p>
-          <p className="text-xs text-red-500 mt-1 font-bold tracking-widest">{word}</p>
-        </div>
+        </motion.div>
       )}
     </div>
   );
@@ -1208,13 +1349,14 @@ export default function Home() {
   const [codeInput, setCodeInput] = useState("");
   const [codeStatus, setCodeStatus] = useState<CodeStatus>("idle");
 
-  // ── Wordle state for case 2 ──
-  const [wordleStates, setWordleStates] = useState<WordleState[]>(() =>
-    case2Words.map(() => ({ guesses: [], currentInput: "", won: false, lost: false }))
-  );
+  // ── Choice game finished flag for case 1 ──
+  const [choiceFinished, setChoiceFinished] = useState(false);
 
   // ── Boom Party finished flag for case 5 ──
   const [boomFinished, setBoomFinished] = useState(false);
+
+  // ── Reveal game finished flag for case 6 ──
+  const [revealFinished, setRevealFinished] = useState(false);
 
   // ── Day3 game state for case 3 ──
   const [day3State, setDay3State] = useState<Day3State>({
@@ -1241,10 +1383,6 @@ export default function Home() {
     ...cases.filter(c => c.id < unlockedUpTo).reverse(),
     ...cases.filter(c => c.id > unlockedUpTo),
   ];
-
-  const wordleFragments = case2Words.map((w, i) => (wordleStates[i].won ? w.fragment : null));
-  const wordleSolvedCount = wordleFragments.filter(Boolean).length;
-  const wordleAllSolved = wordleSolvedCount === case2Words.length;
 
   const pasapalabraIncorrectCount = pasapalabraState.letterStates.filter(s => s === "incorrect").length;
 
@@ -1289,24 +1427,6 @@ export default function Home() {
     } else {
       setCodeStatus("error");
     }
-  }
-
-  // ── Wordle handlers ──
-  function handleWordleInput(index: number, value: string) {
-    setWordleStates(prev => prev.map((s, i) => i === index ? { ...s, currentInput: value } : s));
-  }
-
-  function handleWordleSubmit(index: number) {
-    const ws = wordleStates[index];
-    const target = case2Words[index].word.toUpperCase();
-    const guess = ws.currentInput.toUpperCase();
-    if (guess.length !== target.length || ws.won || ws.lost) return;
-    const newGuesses = [...ws.guesses, guess];
-    const won = guess === target;
-    const lost = !won && newGuesses.length >= MAX_WORDLE_GUESSES;
-    setWordleStates(prev => prev.map((s, i) =>
-      i === index ? { ...s, guesses: newGuesses, currentInput: "", won, lost } : s
-    ));
   }
 
   // ── Pasapalabra handlers ──
@@ -1450,10 +1570,10 @@ export default function Home() {
                   <motion.div key="login" variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.2 }}>
                     <form onSubmit={handleLogin} className="space-y-5">
                       <div>
-                        <label className="block text-neutral-500 text-xs tracking-[0.2em] mb-1">AGENTE</label>
+                        <label className="block text-neutral-500 text-xs tracking-[0.2em] mb-1">ACUSADO</label>
                         <input type="text" value={username} onChange={e => setUsername(e.target.value)} autoComplete="username"
                           className="w-full bg-neutral-800 border border-neutral-700 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-neutral-500 tracking-wider placeholder:text-neutral-600"
-                          placeholder="ID de agente" />
+                          placeholder="ID de acusado" />
                       </div>
                       <div>
                         <label className="block text-neutral-500 text-xs tracking-[0.2em] mb-1">CLAVE DE ACCESO</label>
@@ -1485,7 +1605,7 @@ export default function Home() {
                         <label className="block text-neutral-500 text-xs tracking-[0.2em] mb-1">NOMBRE DE AGENTE</label>
                         <input type="text" value={regUsername} onChange={e => setRegUsername(e.target.value)} autoComplete="username"
                           className="w-full bg-neutral-800 border border-neutral-700 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-neutral-500 tracking-wider placeholder:text-neutral-600"
-                          placeholder="ID de agente" />
+                          placeholder="ID de acusado" />
                       </div>
                       <div>
                         <label className="block text-neutral-500 text-xs tracking-[0.2em] mb-1">CLAVE DE ACCESO</label>
@@ -1569,16 +1689,16 @@ export default function Home() {
                 {/* Header */}
                 <div className="border-b-2 border-neutral-800 pb-4 mb-6">
                   <p className="text-neutral-500 text-[10px] tracking-[0.3em] mb-1">EXPEDIENTE POLISPOL</p>
-                  <h2 className="text-2xl font-bold text-neutral-800 tracking-widest">BIENVENIDO, AGENTE <span className="text-red-800">{username.toUpperCase()}</span></h2>
+                  <h2 className="text-2xl font-bold text-neutral-800 tracking-widest">BIENVENIDO, <span className="text-red-800">{username.toUpperCase()}</span></h2>
                 </div>
 
                 {/* Body — placeholder text, replace with real context */}
                 <div className="space-y-4 text-sm text-neutral-700 leading-relaxed">
                   <p>
-                    Si ha llegado hasta este punto, significa que ha sido seleccionado para formar parte de la unidad de investigación especial de Polispol. Su misión será resolver una serie de casos que requieren habilidades analíticas, deductivas y de trabajo en equipo.
+                    Si ha llegado hasta este punto es momento de iniciar con su defensa. Su misión será resolver una serie de casos que requieren habilidades analíticas, deductivas y de trabajo en equipo.
                   </p>
                   <p>
-                    Durante 7 días enfrentara diversos casos que nos ayudaran a analizar al sospechoso y su expediente, se enfrentara a una prueba por día que de completar de manera correcta le permitirá avanzar al siguiente día.
+                    Durante 7 días enfrentara diversos casos que lo ayudaran a liberarse de ser el sospechoso y de limpiar su expediente, se enfrentara a una prueba por día que de completar de manera correcta le permitirá avanzar al siguiente día.
                   </p>
                   <p>
                     Mucha suerte en el proceso.
@@ -1648,19 +1768,19 @@ export default function Home() {
                           </div>
                         )}
                         {accessible && (
-                          <div className="mt-auto">
-                            <p className="text-sm text-neutral-600 mb-4">
+                          <div className="mt-auto flex flex-col min-h-0">
+                            <p className="text-sm text-neutral-600 mb-4 overflow-y-auto max-h-[180px]">
                               {c.id === 1
-                                ? "El día de hoy inicia la investigación del sospechoso, iniciaremos con un analisis que requiere descifrar algunas palabras clave relacionadas a su entorno y actividades recientes."
+                                ? "Nuestras unidades de inteligencia lo han descubierto en reiteradas ocasiones causando el caos en internet. Hemos interceptado una serie de comentarios mediáticos y altamente polémicos que realizó sobre el séptimo arte. Ha llegado la hora de que dé la cara y demuestre si es capaz de reconocer los hechos que se le imputan."
                                 : c.id === 2
-                                  ? "El día de hoy requerimos encontrar una frase clave empleada por el sospechoso en sus comunicaciones, para ello debemos encontrar su comportamiento con respecto a las letras que conforman el alfabeto."
+                                  ? "No basta con saber qué hizo, necesitamos medir su agudeza mental y ver si logra recordar los detalles de su propio historial. A continuación, se enfrentará al 'Rosco de las evidencias'. De la A a la Z, cada letra esconde un lugar, un momento clave o un dato comprometedor de su trayectoria."
                                   : c.id === 3
-                                    ? "Ya logramos identificar algunas tendencias del sospechoso, ahora necesitamos analizar su comportamiento en situaciones bajo presión."
+                                    ? "Procedemos a la exhibición de la prueba visual número tres. Nuestros agentes han identificado un patrón en estas cuatro imágenes que no podemos ignorar. Ya sea por la naturaleza de los hechos o el contexto de la situación, estas evidencias lo señalan directamente. Deberá demostrar su agudeza mental para evadir los cargos. Encuentre el concepto único que conecta estas cuatro escenas."
                                     : c.id === 4
-                                      ? "Nuestra agente MoniRapida nos a contactado el día de hoy con un avance en su investigación, busca clasificar correctamente el archivo para poder continuar con el análisis del sospechoso."
+                                      ? "Nuestras unidades de inteligencia han interceptado una frecuencia de audio sumamente alarmante. El registro es tan errático que este departamento sospecha de una evidente pérdida de cordura por parte del imputado en plena transmisión en vivo. Para determinar su nivel de responsabilidad, el sospechoso deberá someterse a esta prueba acústica. Escuche el fragmento aislado y confiese con total exactitud: ¿Qué desastre estaba provocando en su stream y qué contexto justifica semejante comportamiento?"
                                       : c.id === 5
-                                        ? "El día de hoy nos encontramos con un problema que frena nuestra investigación, debemos poner al sujeto a prueba para encontrar al verdadero Polispol entre algunos imitadores."
-                                        : "Analiza las evidencias disponibles y descifra el código para avanzar en la investigación."}
+                                        ? "Este tribunal ha colocado un artefacto explosivo temporal sobre la mesa de evidencias. La única forma de evitar la detonación es que adivine de inmediato la palabra que conecta con el concepto que le mostraremos sobre su persona. Sin embargo, las comunicaciones están intervenidas. En el chat se encuentran 'Los Imitadores', sospechosos secundarios que intentarán adelantarse a sus respuestas para incriminarlo aún más. Si el chat responde antes que usted, el mecanismo fallará. Piense rápido, responda con precisión y no se deje ganar por sus suplantadores."
+                                        : "Procedemos con la siguiente fase de su interrogatorio. Hemos confiscado un catálogo de producciones cinematográficas que están atrapadas en su historial. Para evadir los cargos, deberá demostrar que su memoria visual no lo ha abandonado. En la pantalla aparecerá solo un trozo de la imagen promocional de la película. Sin más pistas ni contexto, su obligación como investigado es adivinar el título correcto de la obra. Mire fijamente la prueba y dé su veredicto antes de que se le agote el tiempo"}
                             </p>
                             <button
                               onClick={e => { e.stopPropagation(); openCase(c.id); }}
@@ -1713,7 +1833,64 @@ export default function Home() {
               </div>
 
               {/* Evidence papers */}
-              {activeCase === 5 ? (
+              {activeCase === 7 ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, ease: "backOut" }}
+                  className="w-full max-w-2xl"
+                >
+                  <div className="bg-[#f4f1ea] border border-neutral-300 shadow-lg p-8 relative">
+                    <div className="absolute top-4 right-4 border-2 border-red-800 text-red-800 font-bold px-2 py-1 text-xs rotate-6 opacity-80 tracking-widest">
+                      VEREDICTO FINAL
+                    </div>
+                    <div className="border-b-2 border-neutral-800 pb-4 mb-6">
+                      <p className="text-neutral-500 text-[10px] tracking-[0.3em] mb-1">RESOLUCIÓN DEL CASO</p>
+                      <h2 className="text-xl font-bold text-neutral-800 tracking-widest">07: EL VEREDICTO</h2>
+                    </div>
+                    <div className="space-y-4 text-sm text-neutral-700 leading-relaxed">
+                      <p>
+                        Excelentísima Corte Policarpier
+
+Vistos: Se inicia la investigación en el marco del expediente REG-2026/102076, seguido en contra del imputado, director de fotografía y streamer, Pol Turrents, más conocido en las redes sociales bajo su seudónimo “Polispol” acusado de diversos delitos digitales.
+
+Considerandos:
+1° Se le ha imputado los delitos de realizar críticas cinematográficas absurdas y funables, pérdida de la razón y conductas inadecuadas que van contra la moral y las buenas costumbres y alterar la comunidad. 
+
+2° Que, durante la realización de este juicio, el acusado fue capaz de demostrar su capacidad de memoria, templanza y agudeza mental para cada etapa bajo presión y descifró fotogramas recortados de su propia autoría a pesar de los burdos intentos de trolleo.
+
+3° Que, respecto a las pruebas de cargo presentadas, este tribunal estima que carecen de la fuerza probatoria suficiente para destruir la presunción de inocencia del encausado. Las piezas de este juicio han sido descontextualizadas y, en su mayoría, burdas maniobras de troleo que no logran superar el estándar legal de la duda razonable, habiendo sido completamente desvirtuadas por el ojo técnico y la memoria del imputado.
+
+Y teniendo presente, se resuelve:
+
+I. Se declara absuelto al imputado de todos los cargos y acusaciones formuladas en su contra en este procedimiento.
+
+II. Se compensa al encausado restituyendo su honor digital y sin dejar antecedentes en su hoja de vida cibernética. Además de que el chat lo apoye día a día en cada stream de 5 horas, le envíe subs, y dejen sus twitch prime.
+
+III. Se ordena la liberación de los bienes e insumos retenidos en el contenedor físico (caja de seguridad) que se encuentra en su ubicación actual.
+
+IV. Cúmplase la presente orden de libertad en el mundo real, comenzando a celebrar su cumpleaños desde este momento con su chat y moderadores. 
+
+[1976]
+Regístrese, notifíquese en el stream y archívese.
+
+
+
+
+
+                                                  Excelentisimo Ministro Pochinki 
+
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : activeCase === 6 ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, ease: "backOut" }}
+                >
+                  <RevealGame onFinish={() => setRevealFinished(true)} />
+                </motion.div>
+              ) : activeCase === 5 ? (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, ease: "backOut" }}
@@ -1795,21 +1972,13 @@ export default function Home() {
                     />
                   </motion.div>
                 </div>
+              ) : activeCase === 1 ? (
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, ease: "backOut" }}>
+                  <ChoiceGame onFinish={() => setChoiceFinished(true)} />
+                </motion.div>
               ) : (
                 <div className="grid grid-cols-3 gap-6 w-full max-w-2xl">
-                  {activeCase === 1
-                    ? case2Words.map((w, i) => (
-                      <motion.div key={i} initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 0.45, delay: i * 0.08, ease: "backOut" }}>
-                        <WordlePaper
-                          label={w.label} word={w.word} fragment={w.fragment} rotate={w.rotate} clue={w.clue}
-                          state={wordleStates[i]}
-                          onInput={v => handleWordleInput(i, v)}
-                          onSubmit={() => handleWordleSubmit(i)}
-                        />
-                      </motion.div>
-                    ))
-                    : evidencePapers.map((paper, index) => (
+                  {evidencePapers.map((paper, index) => (
                       <motion.div key={paper.id} initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
                         transition={{ duration: 0.45, delay: index * 0.08, ease: "backOut" }}
                         className={`bg-[#f4f1ea] border border-neutral-300 shadow-lg p-5 flex flex-col gap-3 ${paper.rotate}`}>
@@ -1833,7 +2002,7 @@ export default function Home() {
               )}
 
               {/* ── Sección de código ── */}
-              <motion.div
+              {activeCase !== 7 && <motion.div
                 initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.4, delay: 0.35 }}
                 className="w-full max-w-2xl border border-neutral-700 bg-neutral-800/40 p-6"
@@ -1841,25 +2010,11 @@ export default function Home() {
                 <p className="text-neutral-500 text-xs tracking-[0.25em] mb-1">RESOLUCIÓN</p>
                 <div className="w-full h-px bg-neutral-700 mb-4" />
 
-                {/* Case 1: fragment progress */}
-                {activeCase === 1 && (
-                  <div className="mb-5">
-                    <p className="text-neutral-400 text-xs tracking-[0.1em] leading-relaxed mb-4">
-                      Descifra las seis palabras para revelar el código. Cada palabra resuelta entrega un fragmento.
-                    </p>
-                    <div className="flex gap-3 justify-center mb-3">
-                      {case2Words.map((w, i) => (
-                        <div key={i}
-                          className={`w-10 h-10 border-2 flex items-center justify-center text-base font-bold tracking-widest transition-colors
-                            ${wordleStates[i].won ? "border-green-600 text-green-400" : "border-neutral-600 text-neutral-600"}`}>
-                          {wordleStates[i].won ? w.fragment : "?"}
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-center text-neutral-600 text-xs tracking-widest">
-                      {wordleSolvedCount} DE 6 LETRAS DESCIFRADAS
-                    </p>
-                  </div>
+                {/* Case 1: choice game progress */}
+                {activeCase === 1 && !choiceFinished && (
+                  <p className="text-neutral-400 text-xs tracking-[0.1em] leading-relaxed mb-5">
+                    Completa las 10 rondas para revelar el código.
+                  </p>
                 )}
 
                 {/* Case 2: sentence reveal */}
@@ -1908,31 +2063,32 @@ export default function Home() {
                   </p>
                 )}
 
-                {activeCase !== 1 && activeCase !== 2 && activeCase !== 3 && activeCase !== 5 && (
+                {activeCase === 6 && !revealFinished && (
+                  <p className="text-neutral-400 text-xs tracking-[0.1em] leading-relaxed mb-5">
+                    Completa las 10 imágenes para revelar el código.
+                  </p>
+                )}
+
+                {activeCase !== 1 && activeCase !== 2 && activeCase !== 3 && activeCase !== 5 && activeCase !== 6 && (
                   <p className="text-neutral-400 text-xs tracking-[0.1em] leading-relaxed mb-5">
                     Analiza las evidencias e ingresa el código descifrado para desbloquear el siguiente caso.
                   </p>
                 )}
 
                 {/* Code input */}
-                {((activeCase !== 3 || day3State.gameFinished) && (activeCase !== 5 || boomFinished)) && codeStatus !== "success" ? (
+                {((activeCase !== 1 || choiceFinished) && (activeCase !== 3 || day3State.gameFinished) && (activeCase !== 5 || boomFinished) && (activeCase !== 6 || revealFinished)) && codeStatus !== "success" ? (
                   <form onSubmit={handleCodeSubmit} className="flex gap-3">
                     <input
                       type="text"
                       value={codeInput}
                       onChange={e => { setCodeInput(e.target.value.toUpperCase()); setCodeStatus("idle"); }}
-                      disabled={activeCase === 1 && !wordleAllSolved}
-                      className={`flex-1 bg-neutral-900 border border-neutral-600 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-neutral-400 uppercase placeholder:text-neutral-700 placeholder:normal-case placeholder:tracking-normal disabled:opacity-30 ${activeCase === 2 ? "tracking-wide" : "tracking-[0.3em]"}`}
-                      placeholder={
-                        activeCase === 1 && !wordleAllSolved ? "Descifra las 6 palabras primero"
-                          : "Ingresa el código"
-                      }
+                      className={`flex-1 bg-neutral-900 border border-neutral-600 text-neutral-100 px-3 py-2 text-sm focus:outline-none focus:border-neutral-400 uppercase placeholder:text-neutral-700 placeholder:normal-case placeholder:tracking-normal ${activeCase === 2 ? "tracking-wide" : "tracking-[0.3em]"}`}
+                      placeholder="Ingresa el código"
                       maxLength={activeCase === 2 ? 80 : 50}
                     />
                     <button
                       type="submit"
-                      disabled={activeCase === 1 && !wordleAllSolved}
-                      className="bg-neutral-700 text-neutral-200 px-5 py-2 text-xs tracking-[0.2em] hover:bg-neutral-600 transition-colors border border-neutral-600 hover:border-neutral-400 shrink-0 disabled:opacity-30 disabled:cursor-not-allowed"
+                      className="bg-neutral-700 text-neutral-200 px-5 py-2 text-xs tracking-[0.2em] hover:bg-neutral-600 transition-colors border border-neutral-600 hover:border-neutral-400 shrink-0"
                     >
                       VERIFICAR
                     </button>
@@ -1968,7 +2124,7 @@ export default function Home() {
                     )}
                   </motion.div>
                 )}
-              </motion.div>
+              </motion.div>}
             </motion.div>
           )}
 
