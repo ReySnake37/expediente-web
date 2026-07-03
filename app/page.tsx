@@ -1709,7 +1709,7 @@ export default function Home() {
                     Si ha llegado hasta este punto es momento de iniciar con su defensa. Su misión será resolver una serie de casos que requieren habilidades analíticas, deductivas y de trabajo en equipo.
                   </p>
                   <p className="text-justify">
-                    Durante 7 días enfrentara diversos casos que lo ayudaran a liberarse de ser el sospechoso y de limpiar su expediente, se enfrentara a una prueba por día que de completar de manera correcta le permitirá avanzar al siguiente día.
+                    Durante 7 días enfrentará diversos casos que lo ayudarán a liberarse de ser el sospechoso y de limpiar su expediente; se enfrentará a una prueba por día que, de completar de manera correcta, le permitirá avanzar al siguiente día.
                   </p>
                   <p>
                     Mucha suerte en el proceso.
@@ -1787,19 +1787,14 @@ export default function Home() {
                         )}
                         {accessible && (
                           <div className="flex flex-col flex-1 min-h-0">
-                            <p className="text-base text-neutral-600 mb-4 text-justify">
-                              {c.id === 1
-                                ? "Nuestras unidades de inteligencia lo han descubierto en reiteradas ocasiones causando el caos en internet. Hemos interceptado una serie de comentarios mediáticos y altamente polémicos que realizó sobre el séptimo arte. Ha llegado la hora de que dé la cara y demuestre si es capaz de reconocer los hechos que se le imputan."
-                                : c.id === 2
-                                  ? "No basta con saber qué hizo, necesitamos medir su agudeza mental y ver si logra recordar los detalles de su propio historial. A continuación, se enfrentará al 'Rosco de las evidencias'. De la A a la Z, cada letra esconde un lugar, un momento clave o un dato comprometedor de su trayectoria."
-                                  : c.id === 3
-                                    ? "Procedemos a la exhibición de la prueba visual número tres. Nuestros agentes han identificado un patrón en estas cuatro imágenes que no podemos ignorar. Ya sea por la naturaleza de los hechos o el contexto de la situación, estas evidencias lo señalan directamente. Deberá demostrar su agudeza mental para evadir los cargos. Encuentre el concepto único que conecta estas cuatro escenas."
-                                    : c.id === 4
-                                      ? "Nuestras unidades de inteligencia han interceptado una frecuencia de audio sumamente alarmante. El registro es tan errático que este departamento sospecha de una evidente pérdida de cordura por parte del imputado en plena transmisión en vivo. Para determinar su nivel de responsabilidad, el sospechoso deberá someterse a esta prueba acústica. Escuche el fragmento aislado y confiese con total exactitud: ¿Qué desastre estaba provocando en su stream y qué contexto justifica semejante comportamiento?"
-                                      : c.id === 5
-                                        ? "Este tribunal ha colocado un artefacto explosivo temporal sobre la mesa de evidencias. La única forma de evitar la detonación es que adivine de inmediato la palabra que conecta con el concepto que le mostraremos sobre su persona. Sin embargo, las comunicaciones están intervenidas. En el chat se encuentran 'Los Imitadores', sospechosos secundarios que intentarán adelantarse a sus respuestas para incriminarlo aún más. Si el chat responde antes que usted, el mecanismo fallará. Piense rápido, responda con precisión y no se deje ganar por sus suplantadores."
-                                        : "Procedemos con la siguiente fase de su interrogatorio. Hemos confiscado un catálogo de producciones cinematográficas que están atrapadas en su historial. Para evadir los cargos, deberá demostrar que su memoria visual no lo ha abandonado. En la pantalla aparecerá solo un trozo de la imagen promocional de la película. Sin más pistas ni contexto, su obligación como investigado es adivinar el título correcto de la obra. Mire fijamente la prueba y dé su veredicto antes de que se le agote el tiempo"}
-                            </p>
+                            <div className="text-base text-neutral-600 mb-4 space-y-2 text-justify">
+                              {c.id === 1 && <><p>Nuestras unidades de inteligencia lo han descubierto en reiteradas ocasiones causando el caos en internet.</p><p>Hemos interceptado una serie de comentarios mediáticos y altamente polémicos que realizó sobre el séptimo arte.</p><p>Ha llegado la hora de que dé la cara y demuestre si es capaz de reconocer los hechos que se le imputan.</p></>}
+                              {c.id === 2 && <><p>No basta con saber qué hizo; necesitamos medir su agudeza mental y ver si logra recordar los detalles de su propio historial.</p><p>A continuación, se enfrentará al &apos;Rosco de las evidencias&apos;.</p><p>De la A a la Z, cada letra esconde un lugar, un momento clave o un dato comprometedor de su trayectoria.</p></>}
+                              {c.id === 3 && <><p>Procedemos a la exhibición de la prueba visual número tres.</p><p>Nuestros agentes han identificado un patrón en estas cuatro imágenes que no podemos ignorar.</p><p>Ya sea por la naturaleza de los hechos o el contexto de la situación, estas evidencias lo señalan directamente.</p><p>Deberá demostrar su agudeza mental para evadir los cargos.</p><p>Encuentre el concepto único que conecta estas cuatro escenas.</p></>}
+                              {c.id === 4 && <><p>Nuestras unidades de inteligencia han interceptado una frecuencia de audio sumamente alarmante.</p><p>El registro es tan errático que este departamento sospecha de una evidente pérdida de cordura por parte del imputado en plena transmisión en vivo.</p><p>Para determinar su nivel de responsabilidad, el sospechoso deberá someterse a esta prueba acústica.</p><p>Escuche el fragmento aislado y confiese con total exactitud: ¿Qué desastre estaba provocando en su stream y qué contexto justifica semejante comportamiento?</p></>}
+                              {c.id === 5 && <><p>Este tribunal ha colocado un artefacto explosivo temporal sobre la mesa de evidencias.</p><p>La única forma de evitar la detonación es que adivine de inmediato la palabra que conecta con el concepto que le mostraremos sobre su persona.</p><p>Sin embargo, las comunicaciones están intervenidas. En el chat se encuentran &apos;Los Imitadores&apos;, sospechosos secundarios que intentarán adelantarse a sus respuestas para incriminarlo aún más.</p><p>Si el chat responde antes que usted, el mecanismo fallará. Piense rápido, responda con precisión y no se deje ganar por sus suplantadores.</p></>}
+                              {c.id === 6 && <><p>Procedemos con la siguiente fase de su interrogatorio.</p><p>Hemos confiscado un catálogo de producciones cinematográficas que están atrapadas en su historial.</p><p>Para evadir los cargos, deberá demostrar que su memoria visual no lo ha abandonado.</p><p>En la pantalla aparecerá solo un trozo de la imagen promocional de la película.</p><p>Sin más pistas ni contexto, su obligación como investigado es adivinar el título correcto de la obra. Mire fijamente la prueba y dé su veredicto antes de que se le agote el tiempo.</p></>}
+                            </div>
                             <button
                               onClick={e => { e.stopPropagation(); openCase(c.id); }}
                               className="mt-auto w-full bg-neutral-800 text-[#f4f1ea] py-2 hover:bg-neutral-700 transition-colors text-base tracking-widest"
@@ -1929,10 +1924,10 @@ export default function Home() {
 
                     <div className="space-y-4 text-base text-neutral-700 leading-relaxed mb-8">
                       <p>
-                        MoniRapida realizo una ardua investigación en el archivo del sospechoso, allí encontro situaciones que generan alerta y deben ser identificadas.
+                        MoniRápida realizó una ardua investigación en el archivo del sospechoso; allí encontró situaciones que generan alerta y deben ser identificadas.
                       </p>
                       <p>
-                        Así que para poder continuar con la investigación debemos ir a su registro y terminar lo que ella inicio.
+                        Así que, para poder continuar con la investigación, debemos ir a su registro y terminar lo que ella inició.
                       </p>
                       <p>
                         Nos comenta que si logramos clasificar correctamente el archivo, recibiremos un código que nos permitirá continuar con la investigación y acercarnos a la resolución del caso.
