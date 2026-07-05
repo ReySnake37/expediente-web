@@ -98,7 +98,7 @@ const pasapalabraClues = [
   { letter: "Q", clue: "Inicia: Cuando te piden un pedacito es de", answer: "Queso" },
   { letter: "R", clue: "Inicia: El sospechoso tiene tendencia a convertir este genero musical en poesia.", answer: "Reggaeton" },
   { letter: "S", clue: "Inicia: En este país el sospechoso fue testigo de un accidente.", answer: "Senegal" },
-  { letter: "T", clue: "Inicia: El sospechoso abiertamente a declarado su odio a esta persona.", answer: "Tebas" },
+  { letter: "T", clue: "Inicia: El sospechoso abiertamente ha declarado su odio a esta persona.", answer: "Tebas" },
   { letter: "U", clue: "Inicia: En este lugar el sospechoso habito una evento llamado 'Exodo'.", answer: "Universo" },
   { letter: "V", clue: "Contiene la V: El sospechoso fue visto trabajando mayormente en este medio.", answer: "Television" },
   { letter: "W", clue: "Inicia: En epocas antiguas el sospechoso usaba este dispositivo para escuchar música.", answer: "Walkman" },
@@ -1436,7 +1436,7 @@ export default function Home() {
 
   // ── Folder ──
   const [isOpen, setIsOpen] = useState(false);
-  const [unlockedUpTo, setUnlockedUpTo] = useState(1);
+  const [unlockedUpTo, setUnlockedUpTo] = useState(2);
   const [lastSolvedDate, setLastSolvedDate] = useState<string | null>(null);
 
   // ── Evidence / code ──
@@ -1525,6 +1525,7 @@ export default function Home() {
       const saved = JSON.parse(localStorage.getItem("polispol_game") || "{}");
       if (saved.unlockedUpTo) setUnlockedUpTo(saved.unlockedUpTo);
       if (saved.lastSolvedDate) setLastSolvedDate(saved.lastSolvedDate);
+      if (saved.unlockedUpTo > 1) setIntroSeen(true);
     } catch {}
   }, []);
 
