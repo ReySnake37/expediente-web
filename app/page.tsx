@@ -1,14 +1,18 @@
 ﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { Lock, FileText, Shield, ArrowLeft, ImageIcon, CheckCircle2 } from "lucide-react";
+
+const LeafletMap = dynamic(() => import("./LeafletMap"), { ssr: false });
 
 // ─────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────
 
 type CodeStatus = "idle" | "error" | "success";
+type MapRound = { clue: string; lat: number; lon: number; locationName: string };
 
 type ChoiceRound = { label: string; phrase: string; images: [string, string, string]; correctIdx: number; revealText: string };
 
@@ -59,7 +63,21 @@ const cases = [
   { id: 4, title: "04: Expediente de evaluación conductual fonética", code: "BIENVENIDOS A ESTA SANTA CASA" },
   { id: 5, title: "05: Sabotaje bajo presión", code: "ORIGINAL" },
   { id: 6, title: "06: Prueba forense visual", code: "SABIDURIA" },
-  { id: 7, title: "07: Liberación de cargos", code: "CUMPLEPOL" },
+  { id: 7, title: "07: Prueba de localización", code: "COORDENADAS" },
+  { id: 8, title: "08: El Veredicto", code: "CUMPLEPOL" },
+];
+
+const mapRounds: MapRound[] = [
+  { clue: "Pista 1 — Pol estuvo aquí", lat: 40.4168, lon: -3.7038, locationName: "Madrid" },
+  { clue: "Pista 2 — placeholder", lat: 48.8566, lon: 2.3522,  locationName: "París" },
+  { clue: "Pista 3 — placeholder", lat: 35.6762, lon: 139.6503, locationName: "Tokio" },
+  { clue: "Pista 4 — placeholder", lat: -33.8688, lon: 151.2093, locationName: "Sídney" },
+  { clue: "Pista 5 — placeholder", lat: 40.7128, lon: -74.0060, locationName: "Nueva York" },
+  { clue: "Pista 6 — placeholder", lat: -22.9068, lon: -43.1729, locationName: "Río de Janeiro" },
+  { clue: "Pista 7 — placeholder", lat: 55.7558, lon: 37.6173, locationName: "Moscú" },
+  { clue: "Pista 8 — placeholder", lat: 30.0444, lon: 31.2357, locationName: "El Cairo" },
+  { clue: "Pista 9 — placeholder", lat: 19.4326, lon: -99.1332, locationName: "Ciudad de México" },
+  { clue: "Pista 10 — placeholder", lat: 1.3521, lon: 103.8198, locationName: "Singapur" },
 ];
 
 const choiceRounds: ChoiceRound[] = [
@@ -229,16 +247,34 @@ const BOOM_QUESTIONS: BoomQuestion[] = [
   { text: "¿Animal al que la comunidad le hacia seguimiento a sus crias?", answer: "HALCON" },
   { text: "¿Que elemento del Setup Pol quiere cambiar hace meses y no lo hace?", answer: "SILLA" },
   { text: "¿Seríe en la que Pol nos prometio un barco de cine y no lo hizo?", answer: "PELAGO" },
-  { text: "¿Como se refiere Pol a los viewers?", answer: "CHAT/CERDOS V:" },
+  { text: "¿Como se refiere Pol a los viewers?", answer: "CHAT" },
   { text: "¿País de latinoamerica en el que vivio Pol?", answer: "ARGENTINA" },
   { text: "¿Director de las peliculas de Batman favoritas donde aparece el Jokker favorito de Pol?", answer: "TIM BURTON" },
   { text: "¿Pais en el que Pol encontro un accidente en GeoGuessr?", answer: "SENEGAL" },
   { text: "¿La casa que construyo Pol en Extremo 3 esta inspirada en el artista?", answer: "BAD BUNNY" },
   { text: "¿Cuantos años cumple el sospechoso?", answer: "50" },
-  { text: "¿Pol es alergico a los?", answer: "Mariscos" },
-  { text: "¿Fuera de España Pol estudio en?", answer: "Estados Unidos" },
-  { text: "¿Combinación de sabores favorita de Pol para un zumo?", answer: "Banano y fresa" },
-  { text: "¿Juego favorito de Nintendo de Pol?", answer: "Suika" },
+  { text: "¿Pol es alergico a los?", answer: "MARISCOS" },
+  { text: "¿Fuera de España Pol estudio en?", answer: "ESTADOS UNIDOS" },
+  { text: "¿Combinación de sabores favorita de Pol para un zumo?", answer: "BANANO Y FRESA" },
+  { text: "¿Juego favorito de Nintendo de Pol?", answer: "SUIKA" },
+  { text: "¿Año de nacimiento de Pol?", answer: "1976" },
+  { text: "¿Nombre histórico del Teatro Chino favorito de Pol en los Ángeles?", answer: "GRAUMAN" },
+  { text: "¿El trabajo de Pol le afecto las?", answer: "CERVICALES" },
+  { text: "¿Hace 368 semanas Pol estuvo en California en el evento?", answer: "E3" },
+  { text: "¿Último libro que Pol comenzo a leer?", answer: "EL BARRIO DE LOS DESEOS" },
+  { text: "¿Cómo se llama el Discord de la comunidad de Pol?", answer: "CINEPOL" },
+  { text: "¿Pol fue al Podcast Revival Plus a hablar de la pélicula?", answer: "GREASE" },
+  { text: "¿Película de amor favorita de Pol?", answer: "ABOUT TIME" },
+  { text: "¿Streamer que mando a callar a JK?", answer: "GRAF" },
+  { text: "¿Pol grabo besandose a The Greft E?", answer: "ILLOJUAN" },
+  { text: "¿Pol grabo el videoclip 'Juega' con?", answer: "NACH" },
+  { text: "¿Junto a Falsalarma Pol grabo el videoclip de Bondad o?", answer: "MALICIA" },
+  { text: "¿Junto a Joan Manuel Serrat Pol grabo el videoclip 'Hijo de luz y de la?", answer: "SOMBRA" },
+  { text: "¿Junto a Estopa Pol grabo el videoclip de ?", answer: "LA PRIMAVERA" },
+  { text: "¿Cómo director técnico Pol participo en el concierto de ?", answer: "ANTONIO OROZCO" },
+  { text: "¿Servidor de Minecraft en el que participo Pol que inicia por Q ?", answer: "QSMP" },
+  { text: "¿El compaeñero de Pol en Disaster Chefs fue ?", answer: "PATO" }
+
 ];
 
 
@@ -289,6 +325,14 @@ const CIRCLE_SIZE = 280;
 const CIRCLE_CENTER = CIRCLE_SIZE / 2;
 const CIRCLE_RADIUS = 112;
 const LETTER_BOX = 26;
+
+function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 function PasapalabraGame({
   state, onInput, onAnswer, onPass, onFinish,
@@ -1201,6 +1245,116 @@ function RevealGame({ onFinish }: { onFinish: () => void }) {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// MapGame — world map guessing game (Day 7, 10 rounds)
+// ─────────────────────────────────────────────────────────────────
+
+function MapGame({ onFinish }: { onFinish: () => void }) {
+  const [roundIdx, setRoundIdx] = useState(0);
+  const [phase, setPhase] = useState<"guessing" | "result">("guessing");
+  const [totalScore, setTotalScore] = useState(0);
+  const [guess, setGuess] = useState<{ lat: number; lon: number } | null>(null);
+  const [distance, setDistance] = useState<number | null>(null);
+  const [roundScore, setRoundScore] = useState<number | null>(null);
+  const [allDone, setAllDone] = useState(false);
+
+  const round = mapRounds[roundIdx];
+
+  function handleMapClick(lat: number, lon: number) {
+    if (phase !== "guessing") return;
+    setGuess({ lat, lon });
+  }
+
+  function handleConfirm() {
+    if (!guess) return;
+    const km = haversine(guess.lat, guess.lon, round.lat, round.lon);
+    const score = Math.max(0, Math.round(5000 * Math.exp(-km / 2000)));
+    setDistance(Math.round(km));
+    setRoundScore(score);
+    setTotalScore(prev => prev + score);
+    setPhase("result");
+  }
+
+  function handleNext() {
+    if (roundIdx >= mapRounds.length - 1) {
+      setAllDone(true);
+    } else {
+      setRoundIdx(roundIdx + 1);
+      setPhase("guessing");
+      setGuess(null);
+      setDistance(null);
+      setRoundScore(null);
+    }
+  }
+
+  if (allDone) {
+    return (
+      <div className="w-full max-w-3xl flex flex-col items-center gap-6 py-8">
+        <p className="text-amber-400 text-xs tracking-[0.3em]">PRUEBA COMPLETADA</p>
+        <p className="text-5xl font-bold text-neutral-100">{totalScore.toLocaleString()} pts</p>
+        <p className="text-neutral-400 font-sans text-base text-center">
+          Has completado las {mapRounds.length} rondas de localización.
+        </p>
+        <button
+          onClick={onFinish}
+          className="bg-amber-600 text-neutral-900 px-8 py-3 text-base tracking-[0.2em] hover:bg-amber-500 transition-colors border border-amber-500"
+        >
+          CONTINUAR AL CÓDIGO
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-3xl flex flex-col gap-4">
+      <div className="bg-neutral-900 border border-neutral-700 p-4">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-amber-400 text-xs tracking-[0.3em]">RONDA {roundIdx + 1} / {mapRounds.length}</p>
+          <p className="text-neutral-500 text-xs tracking-[0.2em]">TOTAL: {totalScore.toLocaleString()} pts</p>
+        </div>
+        <p className="text-neutral-100 text-lg font-sans leading-snug">{round.clue}</p>
+      </div>
+
+      <div className="border border-neutral-700" style={{ width: "100%", height: "480px" }}>
+        <LeafletMap
+          phase={phase}
+          guess={guess}
+          correct={phase === "result" ? { lat: round.lat, lon: round.lon } : null}
+          onMapClick={handleMapClick}
+        />
+      </div>
+
+      {phase === "guessing" ? (
+        <button
+          onClick={handleConfirm}
+          disabled={!guess}
+          className="bg-amber-600 disabled:bg-neutral-700 disabled:text-neutral-500 disabled:border-neutral-600 text-neutral-900 px-6 py-2 text-sm tracking-[0.2em] hover:bg-amber-500 transition-colors border border-amber-500"
+        >
+          {guess ? "CONFIRMAR UBICACIÓN" : "HAZ CLIC EN EL MAPA PARA MARCAR TU RESPUESTA"}
+        </button>
+      ) : (
+        <div className="bg-neutral-900 border border-neutral-700 p-4 flex flex-col gap-3">
+          <p className="text-neutral-200 font-sans text-base">
+            <span className="text-green-400 font-semibold">{round.locationName}</span>{" "}
+            estaba a{" "}
+            <span className="text-amber-400 font-semibold">{distance?.toLocaleString()} km</span>{" "}
+            de tu marca.
+          </p>
+          <p className="text-neutral-500 text-sm">+{roundScore?.toLocaleString()} puntos esta ronda</p>
+          <button
+            onClick={handleNext}
+            className="bg-neutral-700 text-neutral-200 px-6 py-2 text-sm tracking-[0.2em] hover:bg-neutral-600 transition-colors border border-neutral-600 hover:border-neutral-400"
+          >
+            {roundIdx >= mapRounds.length - 1
+              ? "VER RESULTADO FINAL"
+              : `SIGUIENTE → RONDA ${roundIdx + 2} / ${mapRounds.length}`}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
 // ChatPoll — live A/B/C vote counter from Twitch chat (60s)
 // ─────────────────────────────────────────────────────────────────
 
@@ -1440,7 +1594,7 @@ export default function Home() {
 
   // ── Folder ──
   const [isOpen, setIsOpen] = useState(false);
-  const [unlockedUpTo, setUnlockedUpTo] = useState(4);
+  const [unlockedUpTo, setUnlockedUpTo] = useState(1);
   const [lastSolvedDate, setLastSolvedDate] = useState<string | null>(null);
 
   // ── Evidence / code ──
@@ -1456,6 +1610,9 @@ export default function Home() {
 
   // ── Reveal game finished flag for case 6 ──
   const [revealFinished, setRevealFinished] = useState(false);
+
+  // ── Map game finished flag for case 7 ──
+  const [mapFinished, setMapFinished] = useState(false);
 
   // ── Day3 game state for case 3 ──
   const [day3State, setDay3State] = useState<Day3State>({
@@ -1799,6 +1956,8 @@ export default function Home() {
                               {c.id === 4 && <><p>Nuestras unidades de inteligencia han interceptado una frecuencia de audio sumamente alarmante.</p><p>El registro es tan errático que este departamento sospecha de una evidente pérdida de cordura por parte del imputado en plena transmisión en vivo.</p><p>Para determinar su nivel de responsabilidad, el sospechoso deberá someterse a esta prueba acústica.</p><p>Escuche el fragmento aislado y confiese con total exactitud: ¿Qué desastre estaba provocando en su stream y qué contexto justifica semejante comportamiento?</p></>}
                               {c.id === 5 && <><p>Este tribunal ha colocado un artefacto explosivo temporal sobre la mesa de evidencias.</p><p>La única forma de evitar la detonación es que adivine de inmediato la palabra que conecta con el concepto que le mostraremos sobre su persona.</p><p>Sin embargo, las comunicaciones están intervenidas. En el chat se encuentran &apos;Los Imitadores&apos;, sospechosos secundarios que intentarán adelantarse a sus respuestas para incriminarlo aún más.</p><p>Si el chat responde antes que usted, el mecanismo fallará. Piense rápido, responda con precisión y no se deje ganar por sus suplantadores.</p></>}
                               {c.id === 6 && <><p>Procedemos con la siguiente fase de su interrogatorio.</p><p>Hemos confiscado un catálogo de producciones cinematográficas que están atrapadas en su historial.</p><p>Para evadir los cargos, deberá demostrar que su memoria visual no lo ha abandonado.</p><p>En la pantalla aparecerá solo un trozo de la imagen promocional de la película.</p><p>Sin más pistas ni contexto, su obligación como investigado es adivinar el título correcto de la obra. Mire fijamente la prueba y dé su veredicto antes de que se le agote el tiempo.</p></>}
+                              {c.id === 7 && <><p>Vamo a ver donde va Pol.</p></>}
+                  
                             </div>
                             <button
                               onClick={e => { e.stopPropagation(); openCase(c.id); }}
@@ -1851,7 +2010,7 @@ export default function Home() {
               </div>
 
               {/* Evidence papers */}
-              {activeCase === 7 ? (
+              {activeCase === 8 ? (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, ease: "backOut" }}
@@ -1895,6 +2054,14 @@ export default function Home() {
                       <p className="text-center font-semibold mt-6">Excelentísimo Ministro Pochinki</p>
                     </div>
                   </div>
+                </motion.div>
+              ) : activeCase === 7 ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, ease: "backOut" }}
+                  className="w-full max-w-3xl"
+                >
+                  <MapGame onFinish={() => setMapFinished(true)} />
                 </motion.div>
               ) : activeCase === 6 ? (
                 <motion.div
@@ -2015,7 +2182,7 @@ export default function Home() {
               )}
 
               {/* ── Sección de código ── */}
-              {activeCase !== 7 && <motion.div
+              {activeCase !== 8 && <motion.div
                 initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.4, delay: 0.35 }}
                 className="w-full max-w-2xl border border-neutral-700 bg-neutral-800/40 p-6"
@@ -2082,14 +2249,20 @@ export default function Home() {
                   </p>
                 )}
 
-                {activeCase !== 1 && activeCase !== 2 && activeCase !== 3 && activeCase !== 5 && activeCase !== 6 && (
+                {activeCase === 7 && !mapFinished && (
+                  <p className="text-neutral-400 text-base tracking-[0.1em] leading-relaxed mb-5">
+                    Completa las 10 rondas del mapa para revelar el código.
+                  </p>
+                )}
+
+                {activeCase !== 1 && activeCase !== 2 && activeCase !== 3 && activeCase !== 5 && activeCase !== 6 && activeCase !== 7 && (
                   <p className="text-neutral-400 text-base tracking-[0.1em] leading-relaxed mb-5">
                     Analiza las evidencias e ingresa el código descifrado para desbloquear el siguiente caso.
                   </p>
                 )}
 
                 {/* Code input */}
-                {((activeCase !== 1 || choiceFinished) && (activeCase !== 3 || day3State.gameFinished) && (activeCase !== 5 || boomFinished) && (activeCase !== 6 || revealFinished)) && codeStatus !== "success" ? (
+                {((activeCase !== 1 || choiceFinished) && (activeCase !== 3 || day3State.gameFinished) && (activeCase !== 5 || boomFinished) && (activeCase !== 6 || revealFinished) && (activeCase !== 7 || mapFinished)) && codeStatus !== "success" ? (
                   <form onSubmit={handleCodeSubmit} className="flex gap-3">
                     <input
                       type="text"
