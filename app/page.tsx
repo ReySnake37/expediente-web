@@ -237,6 +237,8 @@ const BOOM_QUESTIONS: BoomQuestion[] = [
   { text: "¿Cuantos años cumple el sospechoso?", answer: "50" },
   { text: "¿Pol es alergico a los?", answer: "Mariscos" },
   { text: "¿Fuera de España Pol estudio en?", answer: "Estados Unidos" },
+  { text: "¿Combinación de sabores favorita de Pol para un zumo?", answer: "Banano y fresa" },
+  { text: "¿Juego favorito de Nintendo de Pol?", answer: "Suika" },
 ];
 
 
@@ -1438,7 +1440,7 @@ export default function Home() {
 
   // ── Folder ──
   const [isOpen, setIsOpen] = useState(false);
-  const [unlockedUpTo, setUnlockedUpTo] = useState(2);
+  const [unlockedUpTo, setUnlockedUpTo] = useState(4);
   const [lastSolvedDate, setLastSolvedDate] = useState<string | null>(null);
 
   // ── Evidence / code ──
@@ -1790,7 +1792,7 @@ export default function Home() {
                         )}
                         {accessible && (
                           <div className="flex flex-col flex-1 min-h-0">
-                            <div className="text-base text-neutral-600 mb-4 space-y-2 text-justify">
+                            <div className="text-base text-neutral-600 mb-4 space-y-2 font-sans text-justify">
                               {c.id === 1 && <><p>Nuestras unidades de inteligencia lo han descubierto en reiteradas ocasiones causando el caos en internet.</p><p>Hemos interceptado una serie de comentarios mediáticos y altamente polémicos que realizó sobre el séptimo arte.</p><p>Ha llegado la hora de que dé la cara y demuestre si es capaz de reconocer los hechos que se le imputan.</p></>}
                               {c.id === 2 && <><p>A continuación, se enfrentará al "Rosco de las evidencias". De la A a la Z, cada letra esconde un lugar, un momento clave o un dato comprometedor de su trayectoria. </p><p>Esta vez, el chat será su mejor aliado, pida ayuda si la necesita, pero no se rinda.</p></>}
                               {c.id === 3 && <><p>Nuestros agentes han identificado un patrón en estas cuatro imágenes y no podemos ignorar que estas evidencias lo señalan directamente. Encuentre el concepto único que conecta estas cuatro escenas. </p><p>En esta ocasión el chat no será su aliado, así que el primero en describir el concepto gana. </p></>}
