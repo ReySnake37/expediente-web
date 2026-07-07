@@ -738,7 +738,7 @@ function BoomGame({ onFinish, username }: { onFinish: () => void; username: stri
   roundWordRef.current = BOOM_ROUND_WORDS[(roundNumber - 1) % BOOM_ROUND_WORDS.length];
 
   function timerFor(): number {
-    return 10;
+    return 30;
   }
 
   function pickQuestion(used: number[]): { q: BoomQuestion; qIdx: number } {
