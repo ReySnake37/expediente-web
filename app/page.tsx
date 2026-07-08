@@ -166,9 +166,9 @@ const day3Rounds: Day3RoundData[] = [
 const revealRounds: RevealRound[] = [
   { label: "IMAGEN 01", questionImage: "day6/q08.jpg", revealImage: "day6/r08.jpg", answer: "Serie B" },
   { label: "IMAGEN 02", questionImage: "day6/q06.jpg", revealImage: "day6/r06.jpg", answer: "Wicked" },
-  { label: "IMAGEN 03", questionImage: "day6/q03.jpg", revealImage: "day6/r03.jpg", answer: "Todo volvera a ser como antes" },
-  { label: "IMAGEN 04", questionImage: "day6/q04.jpg", revealImage: "day6/r04.jpg", answer: "Emilia Turrents" },
-  { label: "IMAGEN 05", questionImage: "day6/q05.jpg", revealImage: "day6/r05.jpg", answer: "Avatar" },
+  { label: "IMAGEN 03", questionImage: "day6/q03.jpg", revealImage: "day6/r03.jpg", answer: "Res no tornarà a ser com abans" },
+  { label: "IMAGEN 04", questionImage: "day6/q05.jpg", revealImage: "day6/r05.jpg", answer: "Avatar" },
+  { label: "IMAGEN 05", questionImage: "day6/q04.jpg", revealImage: "day6/r04.jpg", answer: "Emilia Turrents" },
   { label: "IMAGEN 06", questionImage: "day6/q02.jpg", revealImage: "day6/r02.jpg", answer: "Saturno" },
   { label: "IMAGEN 07", questionImage: "day6/q07.jpg", revealImage: "day6/r07.jpg", answer: "Amor Bilateral" },
   { label: "IMAGEN 08", questionImage: "day6/q01.jpg", revealImage: "day6/r01.jpg", answer: "El debito" },
