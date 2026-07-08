@@ -12,7 +12,8 @@ const LeafletMap = dynamic(() => import("./LeafletMap"), { ssr: false });
 // ─────────────────────────────────────────────────────────────────
 
 type CodeStatus = "idle" | "error" | "success";
-type MapRound = { clue: string; lat: number; lon: number; locationName: string };
+type GeoPoint = { lat: number; lon: number; name: string };
+type MapRound = { clue: string; clueImage: string; revealImage: string; lat: number; lon: number; locationName: string; extraPoints?: GeoPoint[] };
 
 type ChoiceRound = { label: string; phrase: string; images: [string, string, string]; correctIdx: number; revealText: string };
 
@@ -68,16 +69,39 @@ const cases = [
 ];
 
 const mapRounds: MapRound[] = [
-  { clue: "Pista 1 — Pol estuvo aquí", lat: 40.4168, lon: -3.7038, locationName: "Madrid" },
-  { clue: "Pista 2 — placeholder", lat: 48.8566, lon: 2.3522,  locationName: "París" },
-  { clue: "Pista 3 — placeholder", lat: 35.6762, lon: 139.6503, locationName: "Tokio" },
-  { clue: "Pista 4 — placeholder", lat: -33.8688, lon: 151.2093, locationName: "Sídney" },
-  { clue: "Pista 5 — placeholder", lat: 40.7128, lon: -74.0060, locationName: "Nueva York" },
-  { clue: "Pista 6 — placeholder", lat: -22.9068, lon: -43.1729, locationName: "Río de Janeiro" },
-  { clue: "Pista 7 — placeholder", lat: 55.7558, lon: 37.6173, locationName: "Moscú" },
-  { clue: "Pista 8 — placeholder", lat: 30.0444, lon: 31.2357, locationName: "El Cairo" },
-  { clue: "Pista 9 — placeholder", lat: 19.4326, lon: -99.1332, locationName: "Ciudad de México" },
-  { clue: "Pista 10 — placeholder", lat: 1.3521, lon: 103.8198, locationName: "Singapur" },
+  { clue: "Pista 1 — ¿Dónde estaba Pol?", clueImage: "day7/r01_p.jpg", revealImage: "day7/r01_r.jpg", lat: 51.509381, lon: -0.081492, locationName: "Pol estaba en Londres" },
+  { clue: "Pista 2 — ¿Dónde estaba Pol?", clueImage: "day7/r02_p.jpg", revealImage: "day7/r02_r.jpg", lat: 40.757471, lon: -73.985768,  locationName: "Pol estaba en Nueva York en el Times Square" },
+  { clue: "Pista 3 — ¿Dónde estaba Pol?", clueImage: "day7/r03_p.jpg", revealImage: "day7/r03_r.jpg", lat: -34.816347, lon: -58.538369, locationName: "Pol estaba en Argentina en el aeropuerto de Ezeiza" },
+  { clue: "Pista 4 — ¿Dónde estaba Pol?", clueImage: "day7/r04_p.jpg", revealImage: "day7/r04_r.jpg", lat: 28.181789, lon: -16.584775, locationName: "Pol estaba en Canarias" },
+  { clue: "Pista 5 — ¿Dónde estaba Pol?", clueImage: "day7/r05_p.jpg", revealImage: "day7/r05_r.jpg", lat: 13.584042, lon: 100.298367, locationName: "Pol estaba en Tailandia" },
+  { clue: "Pista 6 — ¿Dónde estaba Pol?", clueImage: "day7/r06_p.jpg", revealImage: "day7/r06_r.jpg", lat: 34.101614, lon: -118.341454, locationName: "Pol estaba en el chinese theatre de Hollywood" },
+  { clue: "Pista 7 — ¿Dónde estaba Pol?", clueImage: "day7/r07_p.jpg", revealImage: "day7/r07_r.jpg", lat: 40.420312, lon: -3.706089, locationName: "Pol estaba en Madrid en el hotel del letrero Schweppes" },
+  { clue: "Pista 8 — ¿Dónde estaba Pol?", clueImage: "day7/r08_p.jpg", revealImage: "day7/r08_r.jpg", lat: 51.914324, lon: 4.460874, locationName: "Pol estaba en Róterdam" },
+  { clue: "Pista 9 — ¿Dónde estaba Pol?", clueImage: "day7/r09_p.jpg", revealImage: "day7/r09_r.jpg", lat: 41.404161, lon: 2.174914, locationName: "Pol estaba en la Sagrada Familia" },
+  { clue: "Pista 10 — ¿Dónde estaba Pol?", clueImage: "day7/r10_p.jpg", revealImage: "day7/r10_r.jpg",
+    lat: 40.4637, lon: -3.7492, locationName: "España",
+    extraPoints: [
+      { lat: 23.6345, lon: -102.5528, name: "México" },
+      { lat: 4.5709,  lon: -74.2973,  name: "Colombia" },
+      { lat: -38.4161,lon: -63.6167,  name: "Argentina" },
+      { lat: -9.1900, lon: -75.0152,  name: "Perú" },
+      { lat: 6.4238,  lon: -66.5897,  name: "Venezuela" },
+      { lat: -35.6751,lon: -71.5430,  name: "Chile" },
+      { lat: -1.8312, lon: -78.1834,  name: "Ecuador" },
+      { lat: 15.7835, lon: -90.2308,  name: "Guatemala" },
+      { lat: 21.5218, lon: -79.3422,  name: "Cuba" },
+      { lat: -16.2902,lon: -63.5887,  name: "Bolivia" },
+      { lat: 18.7357, lon: -70.1627,  name: "República Dominicana" },
+      { lat: 15.2000, lon: -86.2419,  name: "Honduras" },
+      { lat: -23.4425,lon: -58.4438,  name: "Paraguay" },
+      { lat: 13.7942, lon: -88.8965,  name: "El Salvador" },
+      { lat: 12.8654, lon: -85.2072,  name: "Nicaragua" },
+      { lat: 9.7489,  lon: -83.7534,  name: "Costa Rica" },
+      { lat: 8.5380,  lon: -80.7821,  name: "Panamá" },
+      { lat: -32.5228,lon: -55.7658,  name: "Uruguay" },
+      { lat: 1.6508,  lon: 10.2679,   name: "Guinea Ecuatorial" },
+    ],
+  },
 ];
 
 const choiceRounds: ChoiceRound[] = [
@@ -1255,7 +1279,7 @@ function RevealGame({ onFinish }: { onFinish: () => void }) {
 // MapGame — world map guessing game (Day 7, 10 rounds)
 // ─────────────────────────────────────────────────────────────────
 
-function MapGame({ onFinish }: { onFinish: () => void }) {
+function MapGame({ code, onFinish }: { code: string; onFinish: () => void }) {
   const [roundIdx, setRoundIdx] = useState(0);
   const [phase, setPhase] = useState<"guessing" | "result">("guessing");
   const [totalScore, setTotalScore] = useState(0);
@@ -1263,6 +1287,9 @@ function MapGame({ onFinish }: { onFinish: () => void }) {
   const [distance, setDistance] = useState<number | null>(null);
   const [roundScore, setRoundScore] = useState<number | null>(null);
   const [allDone, setAllDone] = useState(false);
+  const [closestPoint, setClosestPoint] = useState<GeoPoint | null>(null);
+
+  useEffect(() => { if (allDone) onFinish(); }, [allDone, onFinish]);
 
   const round = mapRounds[roundIdx];
 
@@ -1273,11 +1300,21 @@ function MapGame({ onFinish }: { onFinish: () => void }) {
 
   function handleConfirm() {
     if (!guess) return;
-    const km = haversine(guess.lat, guess.lon, round.lat, round.lon);
-    const score = Math.max(0, Math.round(5000 * Math.exp(-km / 2000)));
-    setDistance(Math.round(km));
+    const allPoints: GeoPoint[] = [
+      { lat: round.lat, lon: round.lon, name: round.locationName },
+      ...(round.extraPoints ?? []),
+    ];
+    let minKm = Infinity;
+    let nearest = allPoints[0];
+    for (const p of allPoints) {
+      const d = haversine(guess.lat, guess.lon, p.lat, p.lon);
+      if (d < minKm) { minKm = d; nearest = p; }
+    }
+    const score = Math.max(0, Math.round(5000 * Math.exp(-minKm / 2000)));
+    setDistance(Math.round(minKm));
     setRoundScore(score);
     setTotalScore(prev => prev + score);
+    setClosestPoint(nearest);
     setPhase("result");
   }
 
@@ -1290,6 +1327,7 @@ function MapGame({ onFinish }: { onFinish: () => void }) {
       setGuess(null);
       setDistance(null);
       setRoundScore(null);
+      setClosestPoint(null);
     }
   }
 
@@ -1301,31 +1339,46 @@ function MapGame({ onFinish }: { onFinish: () => void }) {
         <p className="text-neutral-400 font-sans text-base text-center">
           Has completado las {mapRounds.length} rondas de localización.
         </p>
-        <button
-          onClick={onFinish}
-          className="bg-amber-600 text-neutral-900 px-8 py-3 text-base tracking-[0.2em] hover:bg-amber-500 transition-colors border border-amber-500"
-        >
-          CONTINUAR AL CÓDIGO
-        </button>
+        <div className="w-full border border-amber-600 bg-neutral-900 p-5 flex flex-col items-center gap-2">
+          <p className="text-neutral-500 text-xs tracking-[0.3em]">CÓDIGO DEL DÍA</p>
+          <p className="text-amber-400 text-3xl font-bold tracking-[0.4em]">{code}</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="w-full max-w-3xl flex flex-col gap-4">
+      {/* Header: ronda + pista */}
       <div className="bg-neutral-900 border border-neutral-700 p-4">
         <div className="flex items-center justify-between mb-2">
           <p className="text-amber-400 text-xs tracking-[0.3em]">RONDA {roundIdx + 1} / {mapRounds.length}</p>
           <p className="text-neutral-500 text-xs tracking-[0.2em]">TOTAL: {totalScore.toLocaleString()} pts</p>
         </div>
         <p className="text-neutral-100 text-lg font-sans leading-snug">{round.clue}</p>
+
+        {/* Imagen de pista (pequeña, fase de adivinanza) */}
+        {phase === "guessing" && (
+          <div className="mt-3 w-full border border-neutral-700">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={round.clueImage}
+              alt="Pista visual"
+              className="w-full h-auto block"
+            />
+          </div>
+        )}
       </div>
 
+      {/* Mapa */}
       <div className="border border-neutral-700" style={{ width: "100%", height: "480px" }}>
         <LeafletMap
           phase={phase}
           guess={guess}
-          correct={phase === "result" ? { lat: round.lat, lon: round.lon } : null}
+          correct={phase === "result" ? (closestPoint ?? { lat: round.lat, lon: round.lon }) : null}
+          altCorrects={round.extraPoints
+            ? [{ lat: round.lat, lon: round.lon }, ...round.extraPoints]
+            : undefined}
           onMapClick={handleMapClick}
         />
       </div>
@@ -1339,14 +1392,29 @@ function MapGame({ onFinish }: { onFinish: () => void }) {
           {guess ? "CONFIRMAR UBICACIÓN" : "HAZ CLIC EN EL MAPA PARA MARCAR TU RESPUESTA"}
         </button>
       ) : (
-        <div className="bg-neutral-900 border border-neutral-700 p-4 flex flex-col gap-3">
-          <p className="text-neutral-200 font-sans text-base">
-            <span className="text-green-400 font-semibold">{round.locationName}</span>{" "}
-            estaba a{" "}
-            <span className="text-amber-400 font-semibold">{distance?.toLocaleString()} km</span>{" "}
-            de tu marca.
-          </p>
-          <p className="text-neutral-500 text-sm">+{roundScore?.toLocaleString()} puntos esta ronda</p>
+        <div className="flex flex-col gap-3">
+          {/* Resultado: distancia */}
+          <div className="bg-neutral-900 border border-neutral-700 p-4 flex flex-col gap-1">
+            <p className="text-neutral-200 font-sans text-base">
+              {round.extraPoints
+                ? <span className="text-green-400 font-semibold">POL ESTÁ EN CIENTOS DE CORAZONES POLICARPIERS EN CIENTOS DE LUGARES...</span>
+                : <><span className="text-green-400 font-semibold">{round.locationName}</span>{" "}
+                  a <span className="text-amber-400 font-semibold">{distance?.toLocaleString()} km</span> de tu marca.</>
+              }
+            </p>
+            <p className="text-neutral-500 text-sm">+{roundScore?.toLocaleString()} puntos esta ronda</p>
+          </div>
+
+          {/* Imagen completa revelada */}
+          <div className="w-full border border-neutral-700">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={round.revealImage}
+              alt={round.locationName}
+              className="w-full h-auto block"
+            />
+          </div>
+
           <button
             onClick={handleNext}
             className="bg-neutral-700 text-neutral-200 px-6 py-2 text-sm tracking-[0.2em] hover:bg-neutral-600 transition-colors border border-neutral-600 hover:border-neutral-400"
@@ -2068,7 +2136,7 @@ export default function Home() {
                   transition={{ duration: 0.4, ease: "backOut" }}
                   className="w-full max-w-3xl"
                 >
-                  <MapGame onFinish={() => setMapFinished(true)} />
+                  <MapGame code={cases[6].code} onFinish={() => setMapFinished(true)} />
                 </motion.div>
               ) : activeCase === 6 ? (
                 <motion.div

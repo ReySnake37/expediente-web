@@ -19,10 +19,27 @@ const correctIcon = L.divIcon({
   iconAnchor: [0, 0],
 });
 
+const altCorrectIcon = L.divIcon({
+  className: "",
+  html: '<div style="width:13px;height:13px;background:#4ade80;border:2px solid #dcfce7;border-radius:50%;opacity:0.75;box-shadow:0 0 6px rgba(74,222,128,0.5);transform:translate(-50%,-50%)"></div>',
+  iconSize: [0, 0],
+  iconAnchor: [0, 0],
+});
+
+function FitBounds({ trigger, points }: { trigger: string; points: { lat: number; lon: number }[] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (points.length === 0) return;
+    const bounds = L.latLngBounds(points.map(p => [p.lat, p.lon] as [number, number]));
+    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 3, animate: true });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trigger]);
+  return null;
+}
+
 function MapResizer() {
   const map = useMap();
   useEffect(() => {
-    // Slight delay so the parent container has finished its layout pass
     const t = setTimeout(() => map.invalidateSize(), 50);
     return () => clearTimeout(t);
   }, [map]);
@@ -42,10 +59,11 @@ interface LeafletMapProps {
   phase: "guessing" | "result";
   guess: { lat: number; lon: number } | null;
   correct: { lat: number; lon: number } | null;
+  altCorrects?: { lat: number; lon: number }[];
   onMapClick: (lat: number, lon: number) => void;
 }
 
-export default function LeafletMap({ phase, guess, correct, onMapClick }: LeafletMapProps) {
+export default function LeafletMap({ phase, guess, correct, altCorrects, onMapClick }: LeafletMapProps) {
   return (
     <MapContainer
       center={[20, 0]}
@@ -64,6 +82,17 @@ export default function LeafletMap({ phase, guess, correct, onMapClick }: Leafle
 
       <MapResizer />
       <ClickHandler onClick={onMapClick} active={phase === "guessing"} />
+
+      {phase === "result" && altCorrects && (
+        <FitBounds
+          trigger="result"
+          points={guess ? [guess, ...altCorrects] : altCorrects}
+        />
+      )}
+
+      {phase === "result" && altCorrects?.map((p, i) => (
+        <Marker key={i} position={[p.lat, p.lon]} icon={altCorrectIcon} />
+      ))}
 
       {guess && <Marker position={[guess.lat, guess.lon]} icon={guessIcon} />}
 
