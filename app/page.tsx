@@ -1670,7 +1670,6 @@ export default function Home() {
   // ── Folder ──
   const [isOpen, setIsOpen] = useState(false);
   const [unlockedUpTo, setUnlockedUpTo] = useState(1);
-  const [lastSolvedDate, setLastSolvedDate] = useState<string | null>(null);
 
   // ── Evidence / code ──
   const [activeCase, setActiveCase] = useState<number | null>(null);
@@ -1744,12 +1743,10 @@ export default function Home() {
     if (!current) return;
     const norm = (s: string) => s.trim().toUpperCase().replace(/\s+/g, "");
     if (norm(codeInput) === norm(current.code)) {
-      const today = new Date().toISOString().split("T")[0];
       const nextUnlocked = current.id + 1;
       setCodeStatus("success");
       setUnlockedUpTo(nextUnlocked);
-      setLastSolvedDate(today);
-      localStorage.setItem("polispol_game", JSON.stringify({ unlockedUpTo: nextUnlocked, lastSolvedDate: today }));
+      localStorage.setItem("polispol_game", JSON.stringify({ unlockedUpTo: nextUnlocked }));
     } else {
       setCodeStatus("error");
     }
@@ -1760,7 +1757,6 @@ export default function Home() {
     try {
       const saved = JSON.parse(localStorage.getItem("polispol_game") || "{}");
       if (saved.unlockedUpTo) setUnlockedUpTo(saved.unlockedUpTo);
-      if (saved.lastSolvedDate) setLastSolvedDate(saved.lastSolvedDate);
       if (saved.unlockedUpTo > 1) setIntroSeen(true);
     } catch {}
   }, []);
@@ -1981,12 +1977,10 @@ export default function Home() {
 
                 <div className={`absolute inset-0 p-4 ${!isOpen ? "pointer-events-none" : ""}`}>
                   {orderedCases.slice(0, 1).map((c) => {
-                    const todayStr = new Date().toISOString().split("T")[0];
-                    const isDailyLocked = lastSolvedDate === todayStr;
                     const isActive = c.id === unlockedUpTo && !allSolved;
                     const isSolved = c.id < unlockedUpTo;
                     const isLocked = c.id > unlockedUpTo;
-                    const accessible = isActive && isLoggedIn && !isDailyLocked;
+                    const accessible = isActive && isLoggedIn;
 
                     return (
                       <motion.div
@@ -2014,12 +2008,6 @@ export default function Home() {
                         {isSolved && (
                           <div className="mt-auto bg-blue-50 border border-blue-200 border-dashed p-3 text-center text-blue-600 text-base">
                             CASO RESUELTO.
-                          </div>
-                        )}
-                        {isActive && isLoggedIn && isDailyLocked && (
-                          <div className="mt-auto bg-red-950/40 border border-red-800/50 border-dashed p-4 text-center text-red-500 text-base">
-                            CASO COMPLETADO HOY.<br />
-                            <span className="text-red-600 text-sm tracking-widest">Vuelve mañana para continuar.</span>
                           </div>
                         )}
                         {accessible && (
