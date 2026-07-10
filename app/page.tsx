@@ -2085,36 +2085,36 @@ export default function Home() {
                     </div>
                     <div className="border-b-2 border-neutral-800 pb-4 mb-6">
                       <p className="text-neutral-500 text-[10px] tracking-[0.3em] mb-1">RESOLUCIÓN DEL CASO</p>
-                      <h2 className="text-2xl font-bold text-neutral-800 tracking-widest">07: EL VEREDICTO</h2>
+                      <h2 className="text-2xl font-bold text-neutral-800 tracking-widest">08: EL VEREDICTO</h2>
                     </div>
                     <div className="space-y-4 text-base text-neutral-700 leading-relaxed [&>p]:text-justify [&>p.text-center]:text-center">
+                      <p>En Barcelona, 10 de julio de 2026.</p>
+
                       <p className="text-center font-semibold">Excelentísima Corte Policarpier</p>
 
                       <p><span className="font-semibold">Vistos:</span> Se inicia la investigación en el marco del expediente REG-2026/102076, seguido en contra del imputado, director de fotografía y streamer, Pol Turrents, más conocido en las redes sociales bajo su seudónimo &quot;Polispol&quot; acusado de diversos delitos digitales.</p>
 
                       <p className="font-semibold">Considerandos:</p>
 
-                      <p><span className="font-semibold">1°</span> Se le ha imputado los delitos de realizar críticas cinematográficas absurdas y funables, pérdida de la razón y conductas inadecuadas que van contra la moral y las buenas costumbres y alterar la comunidad.</p>
+                      <p><span className="font-semibold">1°</span> Se le ha imputado los delitos de realizar críticas cinematográficas absurdas y funables, pérdida de la razón y conductas inadecuadas que van contra la moral y las buenas costumbres y además de alterar la comunidad.</p>
 
-                      <p><span className="font-semibold">2°</span> Que, durante la realización de este juicio, el acusado fue capaz de demostrar su capacidad de memoria, templanza y agudeza mental para cada etapa bajo presión y descifró fotogramas recortados de su propia autoría a pesar de los burdos intentos de trolleo.</p>
-
-                      <p><span className="font-semibold">3°</span> Que, respecto a las pruebas de cargo presentadas, este tribunal estima que carecen de la fuerza probatoria suficiente para destruir la presunción de inocencia del encausado. Las piezas de este juicio han sido descontextualizadas y, en su mayoría, burdas maniobras de troleo que no logran superar el estándar legal de la duda razonable, habiendo sido completamente desvirtuadas por el ojo técnico y la memoria del imputado.</p>
+                      <p><span className="font-semibold">2°</span> Que, respecto a las pruebas de cargo presentadas, este tribunal estima que las pruebas de este juicio han sido descontextualizadas y, en su mayoría, burdas maniobras de troleo que no logran superar el estándar legal de la duda razonable, habiendo sido completamente desvirtuadas por el ojo técnico y la memoria del imputado.</p>
 
                       <p className="font-semibold">Y teniendo presente, se resuelve:</p>
 
-                      <p><span className="font-semibold">I.</span> Se declara absuelto al imputado de todos los cargos y acusaciones formuladas en su contra en este procedimiento.</p>
+                      <p><span className="font-semibold">I.</span> Se declara absuelto al imputado de todos los cargos y acusaciones formuladas en su contra.</p>
 
-                      <p><span className="font-semibold">II.</span> Se compensa al encausado restituyendo su honor digital y sin dejar antecedentes en su hoja de vida cibernética. Además de que el chat lo apoye día a día en cada stream de 5 horas, le envíe subs, y dejen sus twitch prime.</p>
+                      <p><span className="font-semibold">II.</span> Se compensa al encausado restituyendo su honor digital y sin dejar antecedentes en su hoja de vida cibernética. Además de que el chat lo apoye día a día en cada stream de 5 horas, le envíe subs, y dejen sus twitch prime (y obviamente que lo quieran mucho).</p>
 
-                      <p><span className="font-semibold">III.</span> Se ordena la liberación de los bienes e insumos retenidos en el contenedor físico (caja de seguridad) que se encuentra en su ubicación actual.</p>
+                      <p><span className="font-semibold">III.</span> Se ordena la liberación de los bienes (caja de seguridad y regalos) que se encuentran en su ubicación actual, que fue entregada por nuestra agente encubierta BlancaBcn.</p>
 
-                      <p><span className="font-semibold">IV.</span> Cúmplase la presente orden de libertad en el mundo real, comenzando a celebrar su cumpleaños desde este momento con su chat y moderadores.</p>
+                      <p><span className="font-semibold">IV.</span> Cúmplase la presente orden de libertad en el mundo real, comenzando a celebrar su cumpleaños desde este momento con su chat y moderadores y que disfrute de su pastel.</p>
 
                       <p className="text-center text-neutral-500 tracking-widest">[1976]</p>
 
                       <p>Regístrese, notifíquese en el stream y archívese.</p>
 
-                      <p className="text-center font-semibold mt-6">Excelentísimo Ministro Pochinki</p>
+                      <p className="text-center font-semibold mt-6">Excelentisimo Ministro Pochinki</p>
                     </div>
                   </div>
                 </motion.div>
