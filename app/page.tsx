@@ -2012,7 +2012,7 @@ function SorteoGame({ code, onFinish }: { code: string; onFinish: () => void }) 
             {collecting ? "■  DETENER RECOPILACIÓN" : "●  INICIAR RECOPILACIÓN"}
           </button>
 
-          <div className="flex-1 bg-neutral-950 border border-neutral-800 overflow-y-auto flex flex-col" style={{ height: 240 }}>
+          <div className="bg-neutral-950 border border-neutral-800 overflow-y-auto flex flex-col" style={{ height: 220, minHeight: 220, maxHeight: 220 }}>
             {chatMsgs.length === 0
               ? <p className="text-neutral-700 text-[10px] italic p-3">Esperando mensajes del chat...</p>
               : chatMsgs.map((m, i) => (
