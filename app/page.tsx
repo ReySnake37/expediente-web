@@ -1661,7 +1661,7 @@ function ChoiceGame({ onFinish }: { onFinish: () => void }) {
 // ── Edita aquí las preguntas y respuestas del sorteo ─────────────
 const SORTEO_QUESTIONS: { question: string; answer: string }[] = [
   { question: "¿Pol es alérgico a los?",  answer: "Mariscos" },
-  { question: "¿Cómo se le llama a la comunidad que creó Polispol?",       answer: "Policarpiers" },
+  { question: "¿Cómo se llama la canción de inicio de Stream?",       answer: "Until The World Ends" },
   { question: "Suuggie va a compartir la primer palabra para descifrar",            answer: "Chargoggagoggmanchauggagoggchaubunagungamaugg" },
   { question: "¿Película de amor favorita de Pol?",                       answer: "ABOUT TIME" },
   { question: "Suuggie va a compartir la segunda palabra para descifrar",   answer: "Llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch" },
