@@ -1658,17 +1658,22 @@ function ChoiceGame({ onFinish }: { onFinish: () => void }) {
 // SorteoGame — live giveaway (Day 9)
 // ─────────────────────────────────────────────────────────────────
 
-// ── Edita aquí las preguntas y respuestas del sorteo ─────────────
+// ── Preguntas del sorteo (edita aquí) ────────────────────────────
 const SORTEO_QUESTIONS: { question: string; answer: string }[] = [
-  { question: "¿Pol es alérgico a los?",  answer: "Mariscos" },
-  { question: "¿Cómo se llama la canción de inicio de Stream?",       answer: "Until The World Ends" },
-  { question: "Suuggie va a compartir la primer palabra para descifrar",            answer: "Chargoggagoggmanchauggagoggchaubunagungamaugg" },
-  { question: "¿Película de amor favorita de Pol?",                       answer: "ABOUT TIME" },
-  { question: "Suuggie va a compartir la segunda palabra para descifrar",   answer: "Llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch" },
+  { question: "¿Pol llevo a Komanche al estreno de?",  answer: "Spiderman" },
+  { question: "¿En Godzilla vs Kong Pol es team?",  answer: "Kong" },
+  { question: "¿De qué anime apareció vestida en casa de Pol su madre?",  answer: "Naruto" },
+  { question: "¿La última ciudad a la que Pol viajo?",  answer: "Sevilla" },
+  { question: "¿Qué canción cantó Pol en Bellum?",  answer: "Peaches" },
+  { question: "¿Combinación de sabores favorita de Pol para un zumo?",  answer: "Banano y fresa" },
+  { question: "¿Pol fue al Podcast Revival Plus a hablar de la película?",  answer: "Grease" },
+  { question: "¿El compañero de Pol en Disaster Chefs fue?",  answer: "Pato" },
+  { question: "¿Actualmente Pol trabaja con la radio?",  answer: "RAC1" },
+  { question: "¿Última pelicula vista por Pol?", answer: "Kikis Delivery Service" },
 ];
 // ─────────────────────────────────────────────────────────────────
 
-const SORTEO_ROUNDS = 5;
+const SORTEO_ROUNDS = 10;
 
 type ChatMsg = { user: string; text: string; added: boolean };
 
@@ -1682,10 +1687,9 @@ function shufl<T>(arr: T[]): T[] {
 }
 
 function SorteoGame({ code, onFinish }: { code: string; onFinish: () => void }) {
-  const [questionOrder] = useState<{ question: string; answer: string }[]>(() => {
-    const pool = shufl([...SORTEO_QUESTIONS]);
-    return Array.from({ length: SORTEO_ROUNDS }, (_, i) => pool[i % pool.length]);
-  });
+  const [questionOrder] = useState<{ question: string; answer: string }[]>(() =>
+    shufl([...SORTEO_QUESTIONS])
+  );
 
   const [round, setRound] = useState(1);
   const [phase, setPhase] = useState<"collecting" | "roulette" | "winner" | "done">("collecting");
