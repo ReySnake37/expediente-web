@@ -2166,14 +2166,7 @@ export default function Home() {
     }
   }
 
-  // ── Load persisted game state after mount (avoids SSR/hydration mismatch) ──
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("polispol_game") || "{}");
-      if (saved.unlockedUpTo) setUnlockedUpTo(saved.unlockedUpTo);
-      if (saved.unlockedUpTo > 1) setIntroSeen(true);
-    } catch {}
-  }, []);
+  // Día 9 siempre activo — no se lee localStorage
 
   // ── Pasapalabra handlers ──
   function handlePasapalabraInput(v: string) {
