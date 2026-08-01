@@ -66,6 +66,7 @@ const cases = [
   { id: 6, title: "06: Prueba forense visual", code: "SABIDURIA" },
   { id: 7, title: "07: Prueba de localización", code: "COORDENADAS" },
   { id: 8, title: "08: El Veredicto", code: "CUMPLEPOL" },
+  { id: 9, title: "09: Sorteo Waterpark Simulator", code: "REGALO" },
 ];
 
 const mapRounds: MapRound[] = [
@@ -1654,6 +1655,416 @@ function ChoiceGame({ onFinish }: { onFinish: () => void }) {
 }
 
 // ─────────────────────────────────────────────────────────────────
+// SorteoGame — live giveaway (Day 9)
+// ─────────────────────────────────────────────────────────────────
+
+// ── Edita aquí las preguntas y respuestas del sorteo ─────────────
+const SORTEO_QUESTIONS: { question: string; answer: string }[] = [
+  { question: "¿Pol es alérgico a los?",  answer: "Mariscos" },
+  { question: "¿Cómo se le llama a la comunidad que creó Polispol?",       answer: "Policarpiers" },
+  { question: "Suuggie va a compartir la primer palabra para descifrar",            answer: "Chargoggagoggmanchauggagoggchaubunagungamaugg" },
+  { question: "¿Película de amor favorita de Pol?",                       answer: "ABOUT TIME" },
+  { question: "Suuggie va a compartir la segunda palabra para descifrar",   answer: "Llanfairpwllgwyngyllgogerychwyrndrobwllllantysiliogogogoch" },
+];
+// ─────────────────────────────────────────────────────────────────
+
+const SORTEO_ROUNDS = 5;
+
+type ChatMsg = { user: string; text: string; added: boolean };
+
+function shufl<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function SorteoGame({ code, onFinish }: { code: string; onFinish: () => void }) {
+  const [questionOrder] = useState<{ question: string; answer: string }[]>(() => {
+    const pool = shufl([...SORTEO_QUESTIONS]);
+    return Array.from({ length: SORTEO_ROUNDS }, (_, i) => pool[i % pool.length]);
+  });
+
+  const [round, setRound] = useState(1);
+  const [phase, setPhase] = useState<"collecting" | "roulette" | "winner" | "done">("collecting");
+  const [collecting, setCollecting] = useState(false);
+  const [names, setNames] = useState<string[]>([]);
+  const [roundWinners, setRoundWinners] = useState<string[]>([]);
+  const [winner, setWinner] = useState("");
+  const [slotItems, setSlotItems] = useState<string[]>([]);
+  const [litIdx, setLitIdx] = useState<number | null>(null);
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [connected, setConnected] = useState(false);
+  const [chatMsgs, setChatMsgs] = useState<ChatMsg[]>([]);
+
+  const slotInnerRef = useRef<HTMLDivElement>(null);
+  const confettiRef = useRef<HTMLCanvasElement>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number>(0);
+  const collectingRef = useRef(false);
+  const namesRef = useRef<string[]>([]);
+  const answerRef = useRef("");
+
+  const ITEM_H = 68;
+  const CENTER = 2;
+  const currentEntry = questionOrder[round - 1] ?? { question: "", answer: "" };
+  const currentQuestion = currentEntry.question;
+
+  collectingRef.current = collecting;
+  namesRef.current = names;
+  answerRef.current = currentEntry.answer;
+
+  useEffect(() => { if (phase === "done") onFinish(); }, [phase, onFinish]);
+  useEffect(() => () => { cancelAnimationFrame(rafRef.current); }, []);
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [chatMsgs]);
+
+  // Twitch IRC — persistent for all rounds
+  useEffect(() => {
+    const ws = new WebSocket("wss://irc-ws.chat.twitch.tv:443");
+    ws.onopen = () => {
+      ws.send("CAP REQ :twitch.tv/tags twitch.tv/commands");
+      ws.send("PASS oauth:poop");
+      ws.send("NICK justinfan11111");
+      ws.send(`JOIN #${TWITCH_CHANNEL}`);
+      setConnected(true);
+    };
+    ws.onclose = () => setConnected(false);
+    ws.onmessage = (evt) => {
+      const raw = evt.data as string;
+      if (raw.startsWith("PING")) { ws.send("PONG :tmi.twitch.tv"); return; }
+      if (!raw.includes("PRIVMSG")) return;
+      const text = raw.match(/PRIVMSG #\w+ :(.+)/)?.[1]?.trim() ?? "";
+      const user = (
+        raw.match(/display-name=([^;]+)/)?.[1] ||
+        raw.match(/:(\w+)!\w+@/)?.[1] ||
+        ""
+      ).trim();
+      if (!user) return;
+
+      const filter = answerRef.current.trim().toLowerCase();
+      const matches = !filter || text.toLowerCase().includes(filter);
+
+      let added = false;
+      if (collectingRef.current && matches && namesRef.current.length < 40 && !namesRef.current.includes(user)) {
+        const next = [...namesRef.current, user];
+        namesRef.current = next;
+        setNames(next);
+        added = true;
+        if (next.length >= 40) {
+          collectingRef.current = false;
+          setCollecting(false);
+        }
+      }
+
+      setChatMsgs(prev => [...prev, { user, text, added }].slice(-80));
+    };
+    return () => ws.close();
+  }, []);
+
+  // Confetti on done
+  useEffect(() => {
+    if (phase !== "done") return;
+    const canvas = confettiRef.current;
+    if (!canvas) return;
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const ctx = canvas.getContext("2d")!;
+    const COLORS = ["#C8A83A", "#E0C050", "#F2EEE6", "#FFD700", "#FFF8D0", "#9A8020"];
+    const ptcls = Array.from({ length: 260 }, () => ({
+      x: Math.random() * canvas.width, y: -20 - Math.random() * 300,
+      vx: (Math.random() - 0.5) * 5, vy: 1.5 + Math.random() * 4,
+      size: 5 + Math.random() * 9, color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      rot: Math.random() * 360, rotV: (Math.random() - 0.5) * 9, rect: Math.random() > 0.35,
+    }));
+    let alive = true;
+    function drawConfetti() {
+      ctx.clearRect(0, 0, canvas!.width, canvas!.height);
+      let any = false;
+      for (const p of ptcls) {
+        p.x += p.vx; p.y += p.vy; p.vy += 0.07; p.rot += p.rotV;
+        if (p.y >= canvas!.height + 30) continue;
+        any = true;
+        const fade = Math.max(0, Math.min(1, (canvas!.height - p.y) / 120));
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot * Math.PI / 180);
+        ctx.fillStyle = p.color; ctx.globalAlpha = fade;
+        if (p.rect) ctx.fillRect(-p.size / 2, -p.size * 0.4 / 2, p.size, p.size * 0.4);
+        else { ctx.beginPath(); ctx.arc(0, 0, p.size / 2, 0, Math.PI * 2); ctx.fill(); }
+        ctx.restore();
+      }
+      if (any && alive) rafRef.current = requestAnimationFrame(drawConfetti);
+    }
+    drawConfetti();
+    return () => { alive = false; };
+  }, [phase]);
+
+  function removeName(i: number) { setNames(prev => prev.filter((_, idx) => idx !== i)); }
+
+  function spin() {
+    if (isSpinning || names.length < 1) return;
+    const chosen = names[Math.floor(Math.random() * names.length)];
+    const passCount = Math.max(6, Math.ceil(100 / names.length));
+    const prefix: string[] = [];
+    for (let i = 0; i < passCount; i++) prefix.push(...shufl(names));
+    while (prefix.length && prefix[prefix.length - 1] === chosen) prefix.push(prefix.shift()!);
+    const suffix = shufl(names.filter(n => n !== chosen)).slice(0, CENTER);
+    const sequence = [...prefix, chosen, ...suffix];
+    const winnerIdx = prefix.length;
+    const finalY = -(winnerIdx - CENTER) * ITEM_H;
+
+    setSlotItems(sequence);
+    setLitIdx(null);
+    setIsSpinning(true);
+
+    setTimeout(() => {
+      if (slotInnerRef.current) slotInnerRef.current.style.transform = "translateY(0)";
+      const duration = 5200;
+      const start = performance.now();
+      function frame(now: number) {
+        const t = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - t, 5);
+        if (slotInnerRef.current) slotInnerRef.current.style.transform = `translateY(${finalY * eased}px)`;
+        if (t < 1) { rafRef.current = requestAnimationFrame(frame); return; }
+        if (slotInnerRef.current) slotInnerRef.current.style.transform = `translateY(${finalY}px)`;
+        setLitIdx(winnerIdx);
+        setTimeout(() => {
+          setWinner(chosen);
+          setRoundWinners(prev => [...prev, chosen]);
+          setPhase("winner");
+          setIsSpinning(false);
+        }, 900);
+      }
+      rafRef.current = requestAnimationFrame(frame);
+    }, 32);
+  }
+
+  function goNextRound() {
+    const next = round + 1;
+    if (next > SORTEO_ROUNDS) { setPhase("done"); return; }
+    setRound(next);
+    setNames([]);
+    namesRef.current = [];
+    answerRef.current = "";
+    setCollecting(false);
+    collectingRef.current = false;
+    setPhase("collecting");
+  }
+
+  // ── DONE ─────────────────────────────────────────────────────────
+  if (phase === "done") {
+    return (
+      <div className="relative flex flex-col items-center gap-6 py-8">
+        <canvas ref={confettiRef} className="fixed inset-0 pointer-events-none" style={{ zIndex: 50 }} />
+        <p className="text-[10px] tracking-[0.45em] text-amber-500">GANADORES DEL SORTEO</p>
+        <div className="w-64 h-px bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
+        <div className="flex flex-col gap-3 w-full max-w-sm">
+          {roundWinners.map((w, i) => (
+            <motion.div key={i}
+              initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.12, duration: 0.35 }}
+              className="flex items-center gap-4 border border-neutral-700 bg-neutral-900 px-4 py-3">
+              <span className="text-amber-600 text-xs tracking-[0.2em]" style={{ fontVariantNumeric: "tabular-nums" }}>
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <span className="text-neutral-100 text-lg tracking-wider"
+                style={{ fontFamily: "Impact, 'Arial Narrow', sans-serif" }}>{w}</span>
+            </motion.div>
+          ))}
+        </div>
+        <div className="w-64 h-px bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
+        <div className="border border-amber-600 bg-neutral-900 p-5 flex flex-col items-center gap-2">
+          <p className="text-neutral-500 text-[10px] tracking-[0.3em]">CÓDIGO DEL DÍA</p>
+          <p className="text-amber-400 text-3xl font-bold tracking-[0.4em]">{code}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── WINNER ───────────────────────────────────────────────────────
+  if (phase === "winner") {
+    const isLast = round >= SORTEO_ROUNDS;
+    return (
+      <div className="flex flex-col items-center gap-5 py-6">
+        <p className="text-[9px] tracking-[0.4em] text-neutral-600">
+          RONDA {round} / {SORTEO_ROUNDS}
+        </p>
+        <p className="text-[10px] tracking-[0.45em] text-amber-500">G A N A D O R</p>
+        <motion.div
+          initial={{ scale: 2.4, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 260, damping: 18 }}
+          className="text-neutral-100 text-center px-8"
+          style={{ fontFamily: "Impact, 'Arial Narrow', sans-serif", fontSize: "clamp(40px, 6vw, 80px)", lineHeight: 1 }}
+        >
+          {winner}
+        </motion.div>
+        <div className="w-48 h-px bg-gradient-to-r from-transparent via-amber-500 to-transparent" />
+        {roundWinners.length > 1 && (
+          <div className="flex gap-3 flex-wrap justify-center">
+            {roundWinners.slice(0, -1).map((w, i) => (
+              <span key={i} className="text-[10px] text-neutral-600 tracking-wider border border-neutral-800 px-2 py-0.5">
+                {String(i + 1).padStart(2, "0")} {w}
+              </span>
+            ))}
+          </div>
+        )}
+        <button onClick={goNextRound}
+          className="bg-amber-500 text-neutral-900 border border-amber-500 px-10 py-3 font-black tracking-[0.22em] text-sm hover:bg-amber-400 transition-colors mt-2">
+          {isLast ? "VER GANADORES →" : `RONDA ${round + 1} →`}
+        </button>
+      </div>
+    );
+  }
+
+  // ── ROULETTE ─────────────────────────────────────────────────────
+  if (phase === "roulette") {
+    return (
+      <div className="flex flex-col items-center gap-4">
+        <p className="text-[9px] tracking-[0.4em] text-neutral-600">RONDA {round} / {SORTEO_ROUNDS}</p>
+        <p className="text-neutral-400 text-base text-center max-w-2xl"
+          style={{ fontFamily: "Impact, 'Arial Narrow', sans-serif", letterSpacing: "0.04em" }}>
+          {currentQuestion}
+        </p>
+        <div style={{ width: 480 }}>
+          <div style={{ width: "100%", height: ITEM_H * 5, overflow: "hidden", position: "relative",
+            background: "rgb(17 17 34)", border: "1px solid rgb(42 42 68)" }}>
+            <div style={{ position: "absolute", left: 0, right: 0, height: ITEM_H,
+              top: "50%", transform: "translateY(-50%)",
+              borderTop: "1px solid #C8A83A", borderBottom: "1px solid #C8A83A",
+              background: "rgba(200,168,58,0.04)", zIndex: 2, pointerEvents: "none" }} />
+            <div ref={slotInnerRef} style={{ position: "absolute", top: 0, left: 0, right: 0, willChange: "transform" }}>
+              {slotItems.map((name, i) => (
+                <div key={i} style={{ height: ITEM_H, display: "flex", alignItems: "center",
+                  justifyContent: "center", padding: "0 20px", textAlign: "center",
+                  fontFamily: "Impact, 'Arial Narrow', sans-serif", fontSize: 26, letterSpacing: "0.04em",
+                  color: litIdx === i ? "#C8A83A" : "#F2EEE6" }}>
+                  {name}
+                </div>
+              ))}
+            </div>
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: ITEM_H * 2,
+              background: "linear-gradient(to bottom, #0b0b18, transparent)", pointerEvents: "none", zIndex: 3 }} />
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: ITEM_H * 2,
+              background: "linear-gradient(to top, #0b0b18, transparent)", pointerEvents: "none", zIndex: 3 }} />
+          </div>
+        </div>
+        <div className="flex gap-3">
+          <button disabled={isSpinning} onClick={() => setPhase("collecting")}
+            className="bg-neutral-800 border border-neutral-700 text-neutral-300 px-5 py-2 text-[10px] tracking-[0.18em] hover:bg-neutral-700 transition-colors disabled:opacity-30">
+            ← VOLVER
+          </button>
+          <button onClick={spin} disabled={isSpinning || names.length < 1}
+            className="bg-amber-500 disabled:bg-neutral-800 disabled:border-neutral-700 disabled:text-neutral-600 disabled:cursor-not-allowed text-neutral-900 border border-amber-500 px-10 py-3 font-black tracking-[0.22em] text-sm hover:bg-amber-400 transition-colors">
+            {isSpinning ? "·  ·  ·" : "G I R A R"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── COLLECTING ───────────────────────────────────────────────────
+  return (
+    <div className="flex flex-col gap-4 w-full">
+
+      {/* Round header */}
+      <div className="flex items-center justify-between">
+        <div className="flex gap-1.5">
+          {Array.from({ length: SORTEO_ROUNDS }, (_, i) => (
+            <span key={i} className={`w-6 h-1 ${i < round ? "bg-amber-500" : i === round - 1 ? "bg-amber-400" : "bg-neutral-800"}`} />
+          ))}
+        </div>
+        <p className="text-[9px] tracking-[0.3em] text-neutral-600">RONDA {round} / {SORTEO_ROUNDS}</p>
+      </div>
+
+      {/* Question */}
+      <p className="text-neutral-200 text-lg text-center"
+        style={{ fontFamily: "Impact, 'Arial Narrow', sans-serif", letterSpacing: "0.04em" }}>
+        {currentQuestion}
+      </p>
+
+      {/* Chat + grid */}
+      <div className="grid gap-4" style={{ gridTemplateColumns: "260px 1fr", minHeight: 300 }}>
+
+        {/* Left: chat */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <span className={`w-1.5 h-1.5 rounded-full ${connected ? "bg-green-500" : "bg-neutral-600"}`} />
+              <p className="text-[9px] tracking-[0.2em] text-neutral-500">#{TWITCH_CHANNEL.toUpperCase()}</p>
+            </div>
+            <div className={`border px-3 py-0.5 text-center transition-all ${names.length >= 2 ? "border-amber-700" : "border-neutral-800"}`}>
+              <span className={`text-sm font-black ${names.length >= 2 ? "text-amber-400" : "text-neutral-600"}`}
+                style={{ fontFamily: "Impact, 'Arial Narrow', sans-serif", fontVariantNumeric: "tabular-nums" }}>
+                {names.length} / 40
+              </span>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setCollecting(prev => !prev)}
+            disabled={names.length >= 40}
+            className={`text-[9px] tracking-[0.18em] py-1.5 border transition-colors disabled:opacity-40
+              ${collecting
+                ? "bg-red-900 border-red-700 text-red-300 hover:bg-red-800"
+                : "bg-neutral-800 border-neutral-700 text-neutral-300 hover:bg-neutral-700"}`}
+          >
+            {collecting ? "■  DETENER RECOPILACIÓN" : "●  INICIAR RECOPILACIÓN"}
+          </button>
+
+          <div className="flex-1 bg-neutral-950 border border-neutral-800 overflow-y-auto flex flex-col" style={{ height: 240 }}>
+            {chatMsgs.length === 0
+              ? <p className="text-neutral-700 text-[10px] italic p-3">Esperando mensajes del chat...</p>
+              : chatMsgs.map((m, i) => (
+                <div key={i} className={`px-2 py-0.5 flex gap-1.5 items-baseline ${m.added ? "bg-amber-950/30" : ""}`}>
+                  {m.added && <span className="text-amber-500 text-[8px] shrink-0">✓</span>}
+                  <span className={`text-[10px] font-semibold shrink-0 ${m.added ? "text-amber-400" : "text-neutral-500"}`}>{m.user}:</span>
+                  <span className="text-[10px] text-neutral-600 truncate">{m.text}</span>
+                </div>
+              ))
+            }
+            <div ref={chatEndRef} />
+          </div>
+
+          <div className="flex flex-col gap-2 mt-auto">
+            <button onClick={() => { setNames([]); namesRef.current = []; }}
+              className="bg-neutral-900 border border-neutral-700 text-neutral-600 py-1 text-[9px] tracking-[0.15em] hover:text-neutral-300 hover:border-neutral-600 transition-colors">
+              LIMPIAR LISTA
+            </button>
+            <button onClick={() => { setCollecting(false); collectingRef.current = false; setPhase("roulette"); }}
+              disabled={names.length < 2}
+              className="bg-amber-500 disabled:bg-neutral-800 disabled:border-neutral-700 disabled:text-neutral-600 disabled:cursor-not-allowed text-neutral-900 border border-amber-500 py-3 text-[11px] font-black tracking-[0.22em] hover:bg-amber-400 transition-colors">
+              SORTEAR RONDA {round} →
+            </button>
+          </div>
+        </div>
+
+        {/* Right: 40-slot grid */}
+        <div className="grid gap-1" style={{ gridTemplateColumns: "repeat(8, 1fr)", gridTemplateRows: "repeat(5, 1fr)" }}>
+          {Array.from({ length: 40 }, (_, i) => {
+            const filled = i < names.length;
+            return (
+              <div key={i} className={`group relative flex items-center justify-center overflow-hidden transition-all duration-150 ${filled ? "bg-neutral-800 border border-neutral-700" : "bg-neutral-900 border border-dashed border-neutral-800"}`}>
+                {filled ? (
+                  <>
+                    <span className="absolute top-0.5 left-1 text-[6px] text-neutral-600" style={{ fontVariantNumeric: "tabular-nums" }}>{i + 1}</span>
+                    <span className="text-[9px] text-neutral-200 px-1 pt-2.5 pb-0.5 overflow-hidden text-ellipsis whitespace-nowrap w-full text-center">{names[i]}</span>
+                    <button onClick={() => removeName(i)}
+                      className="absolute top-0 right-0 w-3 h-3 text-[7px] text-neutral-700 hover:text-red-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                  </>
+                ) : (
+                  <span className="text-[8px] text-neutral-800" style={{ fontVariantNumeric: "tabular-nums" }}>{i + 1}</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
 // Main page
 // ─────────────────────────────────────────────────────────────────
 
@@ -1665,11 +2076,11 @@ export default function Home() {
   const [authError, setAuthError] = useState("");
 
   // ── Intro ──
-  const [introSeen, setIntroSeen] = useState(false);
+  const [introSeen, setIntroSeen] = useState(true);
 
   // ── Folder ──
   const [isOpen, setIsOpen] = useState(false);
-  const [unlockedUpTo, setUnlockedUpTo] = useState(1);
+  const [unlockedUpTo, setUnlockedUpTo] = useState(9);
 
   // ── Evidence / code ──
   const [activeCase, setActiveCase] = useState<number | null>(null);
@@ -1687,6 +2098,9 @@ export default function Home() {
 
   // ── Map game finished flag for case 7 ──
   const [mapFinished, setMapFinished] = useState(false);
+
+  // ── Sorteo finished flag for case 9 ──
+  const [sorteoFinished, setSorteoFinished] = useState(false);
 
   // ── Day3 game state for case 3 ──
   const [day3State, setDay3State] = useState<Day3State>({
@@ -2026,7 +2440,7 @@ export default function Home() {
                               onClick={e => { e.stopPropagation(); openCase(c.id); }}
                               className="mt-auto w-full bg-neutral-800 text-[#f4f1ea] py-2 hover:bg-neutral-700 transition-colors text-base tracking-widest"
                             >
-                              INSPECCIONAR EVIDENCIA
+                              INICIAR EVENTO
                             </button>
                           </div>
                         )}
@@ -2073,7 +2487,15 @@ export default function Home() {
               </div>
 
               {/* Evidence papers */}
-              {activeCase === 8 ? (
+              {activeCase === 9 ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, ease: "backOut" }}
+                  className="w-full max-w-3xl"
+                >
+                  <SorteoGame code={cases[8].code} onFinish={() => setSorteoFinished(true)} />
+                </motion.div>
+              ) : activeCase === 8 ? (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, ease: "backOut" }}
@@ -2318,14 +2740,20 @@ export default function Home() {
                   </p>
                 )}
 
-                {activeCase !== 1 && activeCase !== 2 && activeCase !== 3 && activeCase !== 5 && activeCase !== 6 && activeCase !== 7 && (
+                {activeCase === 9 && !sorteoFinished && (
+                  <p className="text-neutral-400 text-base tracking-[0.1em] leading-relaxed mb-5">
+                    Vamos a sortear Keys del Waterpark Simulator.
+                  </p>
+                )}
+
+                {activeCase !== 1 && activeCase !== 2 && activeCase !== 3 && activeCase !== 5 && activeCase !== 6 && activeCase !== 7 && activeCase !== 9 && (
                   <p className="text-neutral-400 text-base tracking-[0.1em] leading-relaxed mb-5">
                     Analiza las evidencias e ingresa el código descifrado para desbloquear el siguiente caso.
                   </p>
                 )}
 
                 {/* Code input */}
-                {((activeCase !== 1 || choiceFinished) && (activeCase !== 3 || day3State.gameFinished) && (activeCase !== 5 || boomFinished) && (activeCase !== 6 || revealFinished) && (activeCase !== 7 || mapFinished)) && codeStatus !== "success" ? (
+                {((activeCase !== 1 || choiceFinished) && (activeCase !== 3 || day3State.gameFinished) && (activeCase !== 5 || boomFinished) && (activeCase !== 6 || revealFinished) && (activeCase !== 7 || mapFinished) && (activeCase !== 9 || sorteoFinished)) && codeStatus !== "success" ? (
                   <form onSubmit={handleCodeSubmit} className="flex gap-3">
                     <input
                       type="text"
